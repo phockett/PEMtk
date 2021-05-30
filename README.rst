@@ -1,28 +1,15 @@
-PEMtk
-=====
+PEMtk: the Photoelectron Metrology Toolkit
+==========================================
 
------
+(aka Quantum Metrology with Photoelectrons platform data & analysis
+layer)
 
-.. contents:: **Table of Contents**
-    :backlinks: none
+The unifiying layer (glue) for the platform - details to follow soon.
 
-Installation
-------------
+For now, see `ePSdata for general aims &
+motivation <https://phockett.github.io/ePSdata/about.html#Motivation>`__.
 
-PEMtk is distributed on `PyPI <https://pypi.org>`_ as a universal
-wheel and is available on Linux/macOS and Windows and supports
-Python 2.7/3.5+ and PyPy.
+.. figure:: ./docs/doc-source/figs/QM_unified_schema_wrapped_280820.gv.png
+   :alt: QM Platform schematic
 
-.. code-block:: bash
-
-    $ pip install PEMtk
-
-License
--------
-
-PEMtk is distributed under the terms of both
-
-- `MIT License <https://choosealicense.com/licenses/mit>`_
-- `Apache License, Version 2.0 <https://choosealicense.com/licenses/apache-2.0>`_
-
-at your option.
+   QM Platform schematic
