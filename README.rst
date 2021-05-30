@@ -23,3 +23,28 @@ Currently implemented
 
 - Basic data model and fitting class (20/05/21) + docs.
 - Code framework and notes (August 2020).
+
+
+Installation
+------------
+
+Currently (dev version) only from source + local pip install
+
+Using pip
+
+.. code-block::
+
+  git clone https://github.com/phockett/PEMtk.git
+  pip install -e pemtk
+
+
+Or from setup.py (from clone dir)
+
+``python setup.py install``
+
+
+
+Notes
+
+* The repo can be passed directly to pip, e.g. `pip install git+https://github.com/phockett/PEMtk.git`, see `notes in the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#git>`_.
+* Note that `pip -e` is for 'editable', and requires the source dir to remain, but the installation is also editable, `see notes here <https://stackoverflow.com/questions/41535915/python-pip-install-from-local-dir>`_. Alternatively, use `pip install <path_to_local_pkg>`.
