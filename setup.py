@@ -24,7 +24,7 @@ setup(
     author='Paul Hockett',
     author_email='pemtoolkit@gmail.com',
     maintainer='Paul Hockett',
-    maintainer_email='epsproc@gmail.com',
+    maintainer_email='pemtoolkit@gmail.com',
     url='https://github.com/phockett/PEMtk',
     license='GNU3',
 
