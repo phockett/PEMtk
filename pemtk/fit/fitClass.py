@@ -17,6 +17,8 @@ TODO:
 
 """
 
+import copy
+
 from lmfit import Parameters, Minimizer, report_fit
 import pandas as pd
 import numpy as np
@@ -43,6 +45,7 @@ class pemtkFit(dataClass):
     """
 
     from ._util import setClassArgs
+    from ._plotters import BLMfitPlot
 
     def __init__(self, matE = None, data = None, ADM = None, **kwargs):
 
@@ -59,11 +62,14 @@ class pemtkFit(dataClass):
 
         # self.subset = {}  # Set dict to hold data subset for fitting
         self.subKey = 'subset'  # Set subKey to use existing .data structure for compatibility with existing functions!
+        # self.resultsKey = 'results'  # Set resultsKey to use existing .data structure for compatibility with existing functions!
 
         # Init fit params to None
+        # Currently set to push current fit to base structure, and keep all fits in .data[N] dicts.
         self.lmmu = None
         self.basis = None
         self.fitData = None
+        self.fitInd = 0
 
 
     # def setFitSubset(self, thres = None, selDims = None, thresDims = None, sq = True, drop = True):
@@ -112,7 +118,8 @@ class pemtkFit(dataClass):
         pol = setPolGeoms(**kwargs)
 
         # self.ADM = {'ADMX':ADMX, **kwargs}
-        self.data['pol'] = {'pol':pol}  # Set in main data structure
+        self.data['pol'] = {'pol':pol.swap_dims({'Euler':'Labels'})}  # Set in main data structure, force to Labels as dim.
+        # self.data['pol'] = pol
 
 
 #     def setSubset(self, thres = None, selDims = None, thresDims = None, sq = True, drop = True):
@@ -383,7 +390,8 @@ class pemtkFit(dataClass):
 # ************ MAIN FITTING ROUTINES
 
     # def afblmMatEfit(self, matE = None, lmmuList = None, data = None, basis = None, ADM = None, pol = None, selDims = {}, thres = None, thresDims = 'Eke', lmModelFlag = False, XSflag = True, **kwargs):
-    def afblmMatEfit(self, matE = None, data = None, lmmuList = None, basis = None, ADM = None, selDims = {}, thres = None, thresDims = 'Eke', lmModelFlag = False, XSflag = True, **kwargs):
+    def afblmMatEfit(self, matE = None, data = None, lmmuList = None, basis = None, ADM = None, pol = None, resetBasis = False,
+                        selDims = {}, thres = None, thresDims = 'Eke', lmModelFlag = False, XSflag = True, **kwargs):
         """
         Wrap :py:func:`epsproc.geomFunc.afblmXprod` for use with lmfit fitting routines.
 
@@ -399,8 +407,14 @@ class pemtkFit(dataClass):
         ADM : Xarray.
             Set of ADMs (alignment parameters). Not required if basis is set.
 
+        pol : Xarray
+            Set of polarization geometries (Euler angles). Not required if basis is set.
+            (If not set, defaults to ep.setPolGeoms())
+
+
         basis : optional, default = None
             Use to pass pre-computed basis set.
+            NOTE: currently defaults to self.basis if it exists, pass resetBasis=True to force overwrite.
 
         NOTE:
 
@@ -422,15 +436,18 @@ class pemtkFit(dataClass):
         #     data = self.fitData
 
         if basis is None:
-            if hasattr(self,'basis'):
-                if self.basis is not None:
-                    basis = self.basis
+            # if hasattr(self,'basis') and (not resetBasis) and (self.basis is not None):
+            if (not resetBasis) and (self.basis is not None):
+                basis = self.basis
 
             # TODO: set other optional params here
             else:
                 if ADM is None:
                     # ADM = self.ADM['subset']
                     ADM = self.data[self.subKey]['ADM']
+
+                if (pol is None) and ('pol' in self.data[self.subKey].keys()):
+                    pol = self.data[self.subKey]['pol']
 
         if isinstance(matE, Parameters):
             # Set matE from passed params object
@@ -445,7 +462,7 @@ class pemtkFit(dataClass):
 
         # Run AFBLM calculation; set basis if not already set.
         if basis is None:
-            BetaNormX, basis = afblmXprod(matE, AKQS=ADM,
+            BetaNormX, basis = afblmXprod(matE, AKQS=ADM, RX=pol,
                                                    thres = thres, selDims = selDims, thresDims=thresDims,
                                                    basisReturn = 'ProductBasis', BLMRenorm = BLMRenorm, **kwargs)
 
@@ -493,4 +510,17 @@ class pemtkFit(dataClass):
         # Check final result
         BetaNormX, _ = self.afblmMatEfit(matE = self.result.params)
         self.betaFit = BetaNormX
-        self.residual = self.afblmMatEfit(matE = self.result.params, data = self.data['subset']['AFBLM'])
+        self.residual = self.afblmMatEfit(matE = self.result.params, data = self.data[self.subKey]['AFBLM'])
+
+        #************ Push results to main data structure
+        # May want to keep multiple sets here?
+        # if not (self.resultsKey in self.data.keys()):
+        #     self.data[self.resultsKey] = {}
+        #     self.fitInd = 0
+
+        # Version with simple numerically-indexed results.
+        self.data[self.fitInd] = {}
+        self.data[self.fitInd]['AFBLM'] = BetaNormX.copy()
+        self.data[self.fitInd]['residual'] = self.residual.copy()
+        self.data[self.fitInd]['results'] = copy.deepcopy(self.result)  # Full object copy here.
+        self.fitInd += 1
