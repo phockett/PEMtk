@@ -35,7 +35,7 @@ Using pip
 .. code-block::
 
   git clone https://github.com/phockett/PEMtk.git
-  pip install -e pemtk
+  pip install -e PEMtk
 
 
 Or from setup.py (from clone dir)
@@ -48,3 +48,14 @@ Notes
 
 * The repo can be passed directly to pip, e.g. `pip install git+https://github.com/phockett/PEMtk.git`, see `notes in the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#git>`_.
 * Note that `pip -e` is for 'editable', and requires the source dir to remain, but the installation is also editable, `see notes here <https://stackoverflow.com/questions/41535915/python-pip-install-from-local-dir>`_. Alternatively, use `pip install <path_to_local_pkg>`.
+
+
+Roadmap
+-------
+
+- Further fitting methodology & code developments.
+- Integrated data handling class(es).
+- Image processing.
+- Image simulation.
+- More versatile plotting routines.
+- Interfaces for various experimental platforms.

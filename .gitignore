@@ -4,6 +4,7 @@
 .coverage
 .idea/
 .vscode/
+PEMtk.egg-info/
 pemtk.egg-info/
 build/
 dist/

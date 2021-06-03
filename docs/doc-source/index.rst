@@ -5,8 +5,8 @@
    contain the root `toctree` directive.
    06/02/20 - Updated with nbsphinx support.
 
-Welcome to ePSproc
-==================
+Welcome to PEMtk - the Photoelectron Metrology Toolkit
+======================================================
 
 .. toctree::
    :maxdepth: 2
