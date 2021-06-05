@@ -13,7 +13,13 @@ Welcome to PEMtk - the Photoelectron Metrology Toolkit
    :caption: Intro:
 
    about
-   demos/ePSproc_class_demo_161020
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Intro:
+
+   fitting/PEMtk_fitting_basic_demo_030621-full
+   fitting/PEMtk_fitting_basis-set_demo_050621-full
 
 
 .. toctree::
