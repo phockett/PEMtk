@@ -9,7 +9,7 @@ try:
     import epsproc as ep
 
 except ImportError:
-    print("*** ePSproc not found, setting for local copy.")
+    print("*** ePSproc installation not found, setting for local copy.")
 
     if sys.platform == "win32":
         modPath = r'D:\code\github\ePSproc'  # Win test machine
@@ -20,4 +20,8 @@ except ImportError:
 
     sys.path.append(modPath)
 
-    import epsproc as ep
+    try:
+        import epsproc as ep
+
+    except ImportError:
+        print("*** ePSproc local copy not found, please run 'sys.path.append(<path to ePSproc repo>)' and try again. Optionally set local path settings in PEMtk/__init__.py. (TODO: fix this issue!)")
