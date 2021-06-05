@@ -17,6 +17,10 @@ def BLMfitPlot(self, keys = None, dataType='AFBLM', Etype='t', thres=1e-2, col=N
         if self.fitInd-1 >= 0:
             keys.append(self.fitInd-1)
 
+    if keys is 'all':
+        keys = [self.subKey]
+        keys.append(list(range(0, self.fitInd)))  # Plot all fits
+
     # # Check keys OK - not required since BLMplot() will check this
     # keys = self._keysCheck(keys)
     #
