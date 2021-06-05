@@ -18,6 +18,7 @@ TODO:
 """
 
 import copy
+from datetime import datetime as dt # Import datetime.datetime for now() function
 
 from lmfit import Parameters, Minimizer, report_fit
 import pandas as pd
@@ -45,7 +46,7 @@ class pemtkFit(dataClass):
     """
 
     from ._util import setClassArgs
-    from ._plotters import BLMfitPlot
+    from ._plotters import BLMfitPlot, lmPlotFit
 
     def __init__(self, matE = None, data = None, ADM = None, **kwargs):
 
@@ -523,4 +524,9 @@ class pemtkFit(dataClass):
         self.data[self.fitInd]['AFBLM'] = BetaNormX.copy()
         self.data[self.fitInd]['residual'] = self.residual.copy()
         self.data[self.fitInd]['results'] = copy.deepcopy(self.result)  # Full object copy here.
+
+        # Add some metadata
+        timeString = dt.now().strftime('%Y-%m-%d_%H-%M-%S')
+        self.data[self.fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{self.fitInd}, ({self.data[self.fitInd]['AFBLM']['t'].size} t, {self.data[self.fitInd]['AFBLM']['Labels'].size} pol) points, $\chi^2$={self.data[self.fitInd]['results'].chisqr}\n {timeString}"
+
         self.fitInd += 1
