@@ -287,9 +287,21 @@ data.basis = basis
 # Input set, as defined earlier
 # data.data['subset']['matE'].pd
 
-print('\nSetting  up fit parameters...')
+print('\n*Setting  up fit parameters (with constraints)...')
 # data.setMatEFit()  # Need to fix self.subset usage
-data.setMatEFit(data.data['subset']['matE'])  #, Eke=1.1) # Some hard-coded things to fix here! Now roughly working.
+# data.setMatEFit(data.data['subset']['matE'])  #, Eke=1.1) # Some hard-coded things to fix here! Now roughly working.
+
+# With constraints
+# Set param constraints as dict
+paramsCons = {}
+paramsCons['m_PU_SG_PU_1_n1_1'] = 'm_PU_SG_PU_1_1_n1'
+paramsCons['p_PU_SG_PU_1_n1_1'] = 'p_PU_SG_PU_1_1_n1'
+
+paramsCons['m_PU_SG_PU_3_n1_1'] = 'm_PU_SG_PU_3_1_n1'
+paramsCons['p_PU_SG_PU_3_n1_1'] = 'p_PU_SG_PU_3_1_n1'
+
+data.setMatEFit(paramsCons = paramsCons)
+
 
 print('\n\n*** Setup demo fitting workspace OK.')
 
