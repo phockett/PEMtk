@@ -16,7 +16,7 @@ Welcome to PEMtk - the Photoelectron Metrology Toolkit
 
 .. toctree::
    :maxdepth: 2
-   :caption: Intro:
+   :caption: Fitting/extracting matrix elements:
 
    fitting/PEMtk_fitting_basic_demo_030621-full
    fitting/PEMtk_fitting_basis-set_demo_050621-full
