@@ -20,10 +20,16 @@ TODO:
 import copy
 from datetime import datetime as dt # Import datetime.datetime for now() function
 
-from lmfit import Parameters, Minimizer, report_fit
 import pandas as pd
 import numpy as np
 import xarray as xr
+
+try:
+    from lmfit import Parameters, Minimizer, report_fit
+
+except ImportError:
+    print("*** lmfit not found: data functions available, but not fitting.")
+
 
 from pemtk.data.dataClasses import dataClass
 from pemtk.util.env import isnotebook
@@ -45,6 +51,7 @@ class pemtkFit(dataClass):
     Class prototype for pemtkFit class. Dev version builds on dataClass, and adds some basic subselection & fitting capabilities.
     """
 
+    from ._conv import pdConv
     from ._util import setClassArgs
     from ._plotters import BLMfitPlot, lmPlotFit
 
