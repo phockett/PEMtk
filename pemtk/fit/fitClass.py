@@ -193,7 +193,7 @@ class pemtkFit(dataClass):
 
 
 # *********** Methods to setup fit
-    def setMatEFit(self, matE = None, paramsCons = None, refPhase = 0, colDim = {'it':1}, verbose = 1):
+    def setMatEFit(self, matE = None, paramsCons = None, refPhase = 0, colDim = 'it', verbose = 1):
         """
         Convert an input Xarray into (mag,phase) array of matrix elements for fitting routine.
 
@@ -211,13 +211,16 @@ class pemtkFit(dataClass):
             Set reference phase by integer index or name (string).
             If set to None (or other types) no reference phase will be set.
 
-        colDims : dict, default = {'it',1}
-            Quick hack to allow for restacking via ep.multiDimXrToPD with single column selection by value.
+        colDims : dict, default = 'it'
+            Quick hack to allow for restacking via ep.multiDimXrToPD, this will set to cols = 'it', then restack to 1D dataframe.
+            This should always work for setting matE > fit parameters, but can be overridden if required.
+
             This is convienient for converting to Pandas > lmfit inputs, but should redo directly from Xarray for more robust treatment.
             For ePS matrix elements the default should always work, although will drop degenerate cases (it>1). but shouldn't matter here.
             TODO:
                - make this better, support for multiple selectors.
                - For eps case, matE.pd may already be set?
+
 
         Returns
         -------
@@ -228,7 +231,8 @@ class pemtkFit(dataClass):
             List of states and mappings from states to fitting parameters (names & indexes).
 
 
-        Note: currently assumes Eke dimension, should convert to dummy dim here, but OK for use with ePolyScat test cases.
+        29/06/21: Adapted to use 'it' on restack, then set to single-column with dummy dim. No selection methods, use self.setSubset() for this.
+
         """
         # Quick and ugly wrap args for class - should tidy up here!
         if matE is None:
@@ -269,8 +273,10 @@ class pemtkFit(dataClass):
 
         # Using PD conversion routine works, although may have issues with singleton dims again - should set suitable dummy dim here?
         # pdTest, _ = ep.multiDimXrToPD(testMatE, colDims='Eke', dropna=True)
-        pdTest, _ = multiDimXrToPD(matE, colDims=list(colDim.keys()), dropna=True, squeeze = False)
+        pdTest, _ = multiDimXrToPD(matE, colDims=colDim, dropna=True, squeeze = False)
         # pdTest, _ = ep.multiDimXrToPD(testMatE, colDims='Sym', dropna=True, squeeze = False)
+
+        pdTest = pd.DataFrame(pdTest.stack(colDim))  # Stack to 1D format and force to DF
 
         # Select column from pd dataset - NOW ASSUMED ABOVE, and use .flatten() below to force to 1 column/dim.
     #     col = 1.1

@@ -32,6 +32,9 @@ args = sys.argv
 if len(args) > 1:
     modPath = Path(args[1])
 
+# if len(args) > 2:
+#     pCons = Path(args[2])
+
 # Default case
 # if not 'modPath' in locals():
 else:
@@ -85,7 +88,7 @@ ep.plot.hvPlotters.setPlotters()
 # In this demo, a real case will first be simulated with computational values, and then used to test the fitting routines.
 #
 # (TODO: demo from scratch without known matrix elements.)
-
+#
 # #### Matrix elements
 #
 # For fit testing, start with computational values for the matrix elements. These will be used to simulate data, and also to provide a list of parameters to fit later.
