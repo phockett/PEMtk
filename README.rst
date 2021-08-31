@@ -6,8 +6,11 @@ layer)
 
 The unifiying layer (glue) for the platform - more details to follow soon.
 
-For now, see `ePSdata for general aims &
-motivation <https://phockett.github.io/ePSdata/about.html#Motivation>`__.
+For now, see
+
+* `Ongoing docs on ReadTheDocs <https://pemtk.readthedocs.io/en/latest/index.html>`__.
+* `ePSdata for general aims & motivation <https://phockett.github.io/ePSdata/about.html#Motivation>`__.
+
 
 .. Local fig: .. figure:: ./docs/doc-source/figs/QM_unified_schema_wrapped_280820.gv.png
    Use GH version via full URL instead for consistency on RTD.
