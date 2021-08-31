@@ -41,19 +41,23 @@ from epsproc.geomFunc import afblmXprod
 # if isnotebook():
 #     xr.set_options(display_style = 'html')
 
-def lmmuListStrReformat(lmmuList):
-    """Convert list of tuple labels to short str format"""
-    # Parameter names [a-z_][a-z0-9_]*, so replace - sign with
-    return ['_'.join(str(ele).replace('-','n') for ele in sub) for sub in lmmuList]
+# def lmmuListStrReformat(lmmuList):
+#     """Convert list of tuple labels to short str format"""
+#     # Parameter names [a-z_][a-z0-9_]*, so replace - sign with
+#     return ['_'.join(str(ele).replace('-','n') for ele in sub) for sub in lmmuList]
+
+# Now moved to ._util, should move to ..util?
+from ._util import lmmuListStrReformat
 
 class pemtkFit(dataClass):
     """
     Class prototype for pemtkFit class. Dev version builds on dataClass, and adds some basic subselection & fitting capabilities.
     """
 
-    from ._conv import pdConv
+    from ._conv import pdConv, pdConvSetFit
     from ._util import setClassArgs
     from ._plotters import BLMfitPlot, lmPlotFit
+    from ._sym import symCheck
 
     def __init__(self, matE = None, data = None, ADM = None, **kwargs):
 
@@ -193,7 +197,7 @@ class pemtkFit(dataClass):
 
 
 # *********** Methods to setup fit
-    def setMatEFit(self, matE = None, paramsCons = None, refPhase = 0, colDim = 'it', verbose = 1):
+    def setMatEFit(self, matE = None, paramsCons = 'auto', refPhase = 0, colDim = 'it', verbose = 1):
         """
         Convert an input Xarray into (mag,phase) array of matrix elements for fitting routine.
 
@@ -203,9 +207,10 @@ class pemtkFit(dataClass):
         matE : Xarray
             Input set of matrix elements, used to set allowed (l,m,mu) and input parameters.
 
-        paramsCons : dict, optional, default = None
+        paramsCons : dict, optional, default = 'auto'
             Input dictionary of constraints (expressions) to be set for the parameters.
             See https://lmfit.github.io/lmfit-py/constraints.html
+            If 'auto', parameters will be set via self.symCheck()
 
         refPhase : int or string, default = 0
             Set reference phase by integer index or name (string).
@@ -271,12 +276,13 @@ class pemtkFit(dataClass):
     #     testMatE = data.data['subset']['matE'] #.drop('Sym')  # Subselect before conversion?
         # testMatE = data.data['subset']['matE'].sel({'Eke':1.1},drop=False) #.drop('Sym')  # Setting single Eke here is annoying, as it messes up PD conversion - no way to keep singleton dim???
 
-        # Using PD conversion routine works, although may have issues with singleton dims again - should set suitable dummy dim here?
-        # pdTest, _ = ep.multiDimXrToPD(testMatE, colDims='Eke', dropna=True)
-        pdTest, _ = multiDimXrToPD(matE, colDims=colDim, dropna=True, squeeze = False)
-        # pdTest, _ = ep.multiDimXrToPD(testMatE, colDims='Sym', dropna=True, squeeze = False)
-
-        pdTest = pd.DataFrame(pdTest.stack(colDim))  # Stack to 1D format and force to DF
+        # # Using PD conversion routine works, although may have issues with singleton dims again - should set suitable dummy dim here?
+        # # pdTest, _ = ep.multiDimXrToPD(testMatE, colDims='Eke', dropna=True)
+        # pdTest, _ = multiDimXrToPD(matE, colDims=colDim, dropna=True, squeeze = False)
+        # # pdTest, _ = ep.multiDimXrToPD(testMatE, colDims='Sym', dropna=True, squeeze = False)
+        #
+        # pdTest = pd.DataFrame(pdTest.stack(colDim))  # Stack to 1D format and force to DF
+        pdTest = self.pdConvSetFit(matE = matE, colDim = colDim)  # Functional version.
 
         # Select column from pd dataset - NOW ASSUMED ABOVE, and use .flatten() below to force to 1 column/dim.
     #     col = 1.1
@@ -322,6 +328,13 @@ class pemtkFit(dataClass):
 
         # Set any passed constraints
         if paramsCons is not None:
+            if paramsCons is 'auto':
+                paramsCons, _ = self.symCheck(pdTest = pdTest, colDim = colDim)
+
+                if verbose:
+                    print("Auto-setting parameters.")
+
+
             for k,v in paramsCons.items():
                 if k in params.keys():
                     params[k].set(expr = v)
@@ -476,9 +489,9 @@ class pemtkFit(dataClass):
 
         # Run AFBLM calculation; set basis if not already set.
         if basis is None:
-            BetaNormX, basis = afblmXprod(matE, AKQS=ADM, RX=pol,
-                                                   thres = thres, selDims = selDims, thresDims=thresDims,
-                                                   basisReturn = 'ProductBasis', BLMRenorm = BLMRenorm, **kwargs)
+            BetaNormX, basis = afblmXprod(matE, AKQS=ADM,   # RX=pol,  # RX removed in ePSproc v1.3.0 - not required/valid for AF calcs.
+                                           thres = thres, selDims = selDims, thresDims=thresDims,
+                                           basisReturn = 'ProductBasis', BLMRenorm = BLMRenorm, **kwargs)
 
     #         return BetaNormX, basis
 

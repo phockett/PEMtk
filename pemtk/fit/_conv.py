@@ -4,7 +4,7 @@
 
 
 import pandas as pd
-
+from epsproc import multiDimXrToPD
 
 # TODO: should be able to simplify & automate with results.__dict__  - May not be comprehensive?
 # NOW REINDEX BY FIT # & Type, this makes sense for wide <> long conversions
@@ -78,3 +78,21 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
     dfRef.index.names = outputIndex
 
     return(dfLong, dfRef)
+
+
+def pdConvSetFit(self, matE, colDim = 'it'):
+    """
+    Restack matE to pd.DataFrame and force to 1D.
+
+    Utility function for setting up fit parameter sets.
+
+    """
+
+    # Using PD conversion routine works, although may have issues with singleton dims again - should set suitable dummy dim here?
+    # pdTest, _ = ep.multiDimXrToPD(testMatE, colDims='Eke', dropna=True)
+    pdTest, _ = multiDimXrToPD(matE, colDims=colDim, dropna=True, squeeze = False)
+    # pdTest, _ = ep.multiDimXrToPD(testMatE, colDims='Sym', dropna=True, squeeze = False)
+
+    pdTest = pd.DataFrame(pdTest.stack(colDim))  # Stack to 1D format and force to DF
+
+    return pdTest

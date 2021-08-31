@@ -23,3 +23,10 @@ def setClassArgs(self,args):
 #             for k,v in args[argName].items():
 #                 if args[argName] is not None:
 #                     setattr(self, k, v)
+
+
+
+def lmmuListStrReformat(lmmuList):
+    """Convert list of tuple labels to short str format"""
+    # Parameter names [a-z_][a-z0-9_]*, so replace - sign with
+    return ['_'.join(str(ele).replace('-','n') for ele in sub) for sub in lmmuList]
