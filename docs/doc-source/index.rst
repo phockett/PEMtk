@@ -20,6 +20,7 @@ Welcome to PEMtk - the Photoelectron Metrology Toolkit
 
    fitting/PEMtk_fitting_basic_demo_030621-full
    fitting/PEMtk_fitting_basis-set_demo_050621-full
+   fitting/PEMtk_fitting_demo_multi-fit_tests_130621_r1000
    fitting/PEMtk_analysis_demo_150621-tidy
 
 
