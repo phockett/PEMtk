@@ -61,21 +61,25 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
     dfLong.index.names = outputIndex
 
 
-    # Set ref values too
-    refDataDict = {}
+    # Set ref values too, if present
+    if hasattr(self,'params'):
+        for n,i in enumerate(self.params.items()):
+        #     print(n,i)
 
-    for n,i in enumerate(self.params.items()):
-    #     print(n,i)
+            pmType = i[0][0]
+            refDataDict[('ref', pmType, n)] = {j:getattr(i[1],j) for j in paramVars}
+            refDataDict[('ref', pmType, n)]['Param'] = i[0][2:]  # Use name + type for easier plotting later?
+        #     dataDict[(fitInd, n)]['Type'] = i[0][0]
+        #     dataDict[n]['Fit'] = fitInd  # As column
 
-        pmType = i[0][0]
-        refDataDict[('ref', pmType, n)] = {j:getattr(i[1],j) for j in paramVars}
-        refDataDict[('ref', pmType, n)]['Param'] = i[0][2:]  # Use name + type for easier plotting later?
-    #     dataDict[(fitInd, n)]['Type'] = i[0][0]
-    #     dataDict[n]['Fit'] = fitInd  # As column
+        # Stack to long-format PD
+        dfRef = pd.DataFrame(refDataDict).T
+        dfRef.index.names = outputIndex
 
-    # Stack to long-format PD
-    dfRef = pd.DataFrame(refDataDict).T
-    dfRef.index.names = outputIndex
+    else:
+        dfRef = None
+        print("Pandas reference table not set, missing self.params data.")
+
 
     return(dfLong, dfRef)
 
