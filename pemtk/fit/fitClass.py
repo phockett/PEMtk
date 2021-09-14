@@ -56,6 +56,7 @@ class pemtkFit(dataClass):
 
     from ._conv import pdConv, pdConvSetFit
     from ._util import setClassArgs
+    from ._parallel import multiFit
     from ._plotters import BLMfitPlot, lmPlotFit
     from ._sym import symCheck
 
@@ -514,12 +515,22 @@ class pemtkFit(dataClass):
 
 
     # Wrap fit routine
-    def fit(self):
+    def fit(self, fitInd = None):
         """
         Wrapper to run lmfit.Minimizer.
 
         Uses preset self.* parameters.
+
+        For parallel usage, supply explicit fitInd instead of using class var.
+
+        07/09/21: updating for parallel use.
+                    Note that main outputs (self.reults etc.) are now dropped. May want to set to last result?
+
         """
+        if fitInd is None:
+            fitInd = self.fitInd
+            self.fitInd += 1
+
 
         # Setup fit
     #     self.minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=(self.data['subset']['AFBLM']))  # , fcn_args=(lmmuList, BetaNormX, basis))  # In this case fn. args present as self.arg, but leave data as passed arg.
@@ -532,12 +543,14 @@ class pemtkFit(dataClass):
     #     minner = Minimizer(afblmMatEfit, self.params, fcn_args=(self.lmmu, self.data['subset']['AFBLM'], self.basis))
 
         # Run fit
-        self.result = minner.minimize()
+        # self.result = minner.minimize()
+        result = minner.minimize()
 
         # Check final result
-        BetaNormX, _ = self.afblmMatEfit(matE = self.result.params)
-        self.betaFit = BetaNormX
-        self.residual = self.afblmMatEfit(matE = self.result.params, data = self.data[self.subKey]['AFBLM'])
+        BetaNormX, _ = self.afblmMatEfit(matE = result.params)
+        # self.betaFit = BetaNormX
+        # self.residual = self.afblmMatEfit(matE = self.result.params, data = self.data[self.subKey]['AFBLM'])
+        residual = self.afblmMatEfit(matE = result.params, data = self.data[self.subKey]['AFBLM'])
 
         #************ Push results to main data structure
         # May want to keep multiple sets here?
@@ -546,13 +559,16 @@ class pemtkFit(dataClass):
         #     self.fitInd = 0
 
         # Version with simple numerically-indexed results.
-        self.data[self.fitInd] = {}
-        self.data[self.fitInd]['AFBLM'] = BetaNormX.copy()
-        self.data[self.fitInd]['residual'] = self.residual.copy()
-        self.data[self.fitInd]['results'] = copy.deepcopy(self.result)  # Full object copy here.
+        self.data[fitInd] = {}
+        self.data[fitInd]['AFBLM'] = BetaNormX.copy()
+        # self.data[fitInd]['residual'] = self.residual.copy()
+        # self.data[fitInd]['results'] = copy.deepcopy(self.result)  # Full object copy here.
+        self.data[fitInd]['residual'] = residual.copy()
+        self.data[fitInd]['results'] = result  #.copy()  # Full object copy here.
+
 
         # Add some metadata
         timeString = dt.now().strftime('%Y-%m-%d_%H-%M-%S')
-        self.data[self.fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{self.fitInd}, ({self.data[self.fitInd]['AFBLM']['t'].size} t, {self.data[self.fitInd]['AFBLM']['Labels'].size} pol) points, $\chi^2$={self.data[self.fitInd]['results'].chisqr}\n {timeString}"
+        self.data[fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{fitInd}, ({self.data[fitInd]['AFBLM']['t'].size} t, {self.data[fitInd]['AFBLM']['Labels'].size} pol) points, $\chi^2$={self.data[fitInd]['results'].chisqr}\n {timeString}"
 
-        self.fitInd += 1
+        # self.fitInd += 1
