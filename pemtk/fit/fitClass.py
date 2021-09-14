@@ -49,16 +49,28 @@ from epsproc.geomFunc import afblmXprod
 # Now moved to ._util, should move to ..util?
 from ._util import lmmuListStrReformat
 
+# Plotters - testing import routines here, include modules & flags
+# from epsproc.plot import hvPlotters  # Should probably use this!
+# from pemtk.util.hvPlotters import setPlotDefaults  # Pkg version, opts function only (as per tmo-dev)
+# print(hvFlag)  # Fails
+from pemtk.util import hvPlotters  # Imports full module, include setup routines.
+# print(hvPlotters.hvFlag)  # OK
+# print(hvFlag)  # Fails
+# print(hvPlotters.hv)
+
 class pemtkFit(dataClass):
     """
     Class prototype for pemtkFit class. Dev version builds on dataClass, and adds some basic subselection & fitting capabilities.
     """
 
+    from ._analysis import analyseFits, fitHist  #, scopeTest
     from ._conv import pdConv, pdConvSetFit
-    from ._util import setClassArgs
     from ._parallel import multiFit
     from ._plotters import BLMfitPlot, lmPlotFit
     from ._sym import symCheck
+    from ._util import setClassArgs
+
+    # from pemtk.util import hvPlotters  # Imports full module, include setup routines.
 
     def __init__(self, matE = None, data = None, ADM = None, **kwargs):
 
@@ -83,6 +95,17 @@ class pemtkFit(dataClass):
         self.basis = None
         self.fitData = None
         self.fitInd = 0
+
+        # Quick hack for optional Holoviews import - may not be best way to do this?
+        # Issue without binding to self is scope of sub-module/imported methods (e.g. from _analysis.py).
+        # Methods within this file ARE within the import's scope however.
+        if hvPlotters.hvFlag:
+            self.hv = hvPlotters.hv
+            self.setPlotDefaults = hvPlotters.setPlotDefaults
+            self.setPlotDefaults()
+        else:
+            self.hv = False
+            self.setPlotDefaults = None
 
 
     # def setFitSubset(self, thres = None, selDims = None, thresDims = None, sq = True, drop = True):
