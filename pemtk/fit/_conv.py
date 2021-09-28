@@ -9,7 +9,7 @@ from epsproc import multiDimXrToPD
 # TODO: should be able to simplify & automate with results.__dict__  - May not be comprehensive?
 # NOW REINDEX BY FIT # & Type, this makes sense for wide <> long conversions
 # For stacked case, set as tuple dictionary index
-def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value', 'stderr', 'vary', 'expr']):
+def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value', 'stderr', 'vary', 'expr'],  dataRange = None):
     """
     Basic conversion for set of fit results > Pandas, long format.
 
@@ -25,7 +25,14 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
     paramVars : optional, list, default = ['value', 'stderr', 'vary', 'expr']
         Values to extract from lmfit params object (per parameter per fit).
 
+    dataRange : optional, list, default = None
+        Range of indexes to use, defaults to [0, self.fitInd].
+
     """
+
+    # Set default indexes
+    if dataRange is None:
+        dataRange = [0, self.fitInd]
 
     # Set vars
     dataDict = {}
@@ -35,7 +42,7 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
     outputIndex = ['Fit','Type','pn']  # Cols in output PD dataframe
 
     # Extract relevant data from lmfit params class objects & reindex
-    for fitInd in range(0,self.fitInd):
+    for fitInd in range(dataRange[0], dataRange[1]):
 
         # Get fit vars
         fitDict = {k:getattr(self.data[fitInd]['results'], k) for k in fitVars}
