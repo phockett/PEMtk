@@ -31,8 +31,9 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
     """
 
     # Set default indexes
-    if dataRange is None:
-        dataRange = [0, self.fitInd]
+    # if dataRange is None:
+    #     dataRange = [0, self.fitInd]
+    dataRange = self._setDefaultFits(dataRange)
 
     # Set vars
     dataDict = {}

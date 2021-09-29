@@ -65,10 +65,11 @@ class pemtkFit(dataClass):
 
     from ._analysis import analyseFits, fitHist  #, scopeTest
     from ._conv import pdConv, pdConvSetFit
+    from ._filters import thresFits
     from ._parallel import multiFit
     from ._plotters import BLMfitPlot, lmPlotFit
     from ._sym import symCheck
-    from ._util import setClassArgs
+    from ._util import setClassArgs, _setDefaultFits
 
     # from pemtk.util import hvPlotters  # Imports full module, include setup routines.
 

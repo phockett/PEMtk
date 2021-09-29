@@ -40,6 +40,7 @@ from epsproc import matEleSelector, multiDimXrToPD
 #     print("Checking isnotebook()")
 #     print(isnotebook())
 
+
 def analyseFits(self, dataRange = None):
     """
     Collate fit data from multiple runs.
@@ -51,15 +52,16 @@ def analyseFits(self, dataRange = None):
 
     """
 
-    # Set default indexes
-    if dataRange is None:
-        dataRange = [0, self.fitInd]
-
+    dataRange = self._setDefaultFits(dataRange)
 
     #*** Reformat data from class.
 
     # Convert fit results to Pandas
     dfLong, dfRef = self.pdConv(dataRange = dataRange)
+
+    # Set per-fit metrics
+    dfPF = dfLong.droplevel(['Type','pn']).reset_index().drop_duplicates('Fit').drop(['Param','vary','expr','value','stderr'], axis=1).set_index('Fit')
+
 
     # Stack AFBLM fit outputs to Xarrays
     # Don't recall the best way to do this - here pass to list then stack directly
@@ -77,18 +79,19 @@ def analyseFits(self, dataRange = None):
 
     AFpdLong = AFpd.reset_index().melt(id_vars=['Fit','l','m'])  # This works for pushing to full long-format with col by t
 
-    # Set per-fit metrics
-    dfPF = data.fitMetrics['dfLong'].droplevel(['Type','pn']).reset_index().drop_duplicates('Fit').drop(['Param','vary','expr','value','stderr'], axis=1)
 
     #*** Set to self
     # loc = locals()
     # self.fitMetrics = {i: loc[i] for i in ('dfLong', 'dfRef', 'AFxr', 'AFpd', 'AFxrRS', 'AFpdLong')}  # White list
     # self.fitMetrics = {i: loc[i] if i not in ('AFstack') for i in loc}  # Black list
     # self.fitMetrics = {i: loc[i] for i in loc}  # All
-    self.fitMetrics = locals()  # All - may need .copy()?
+    # self.fitMetrics = locals()  # All - may need .copy()?
+    self.data['fits'] = locals()  # All - may need .copy()?
+    del self.data['fits']['self']  # Remove 'self'
 
 
-def fitHist(self, bins = 'auto', dataType = 'redchi', binRange = None, backend = 'hv'):
+def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = 'dfPF',
+            thres = None, mask = True, binRange = None, backend = 'hv'):
     """
     Basic histogram plot of batch fit results.
 
@@ -102,6 +105,22 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', binRange = None, backend =
 
     dataType : str, default = 'redchi'
         DataType to histogram.
+        (Currently only supports a single dataType.)
+
+    key : str, optional, default = 'fit'
+        Key into main self.data dictionary.
+
+    dataDict : str, optional, default = 'dfPF'
+        Dataset to use, from self.data[key].
+        Default case is per-fit metrics.
+
+    thres : float, optional, default = None
+        Set threshold for plotting, for range [0, thres].
+        This is passed to self.thresFits() and sets self.data[key]['mask'].
+        For more control use binRange setting.
+
+    mask : bool, optional, default = True
+        Use self.data[key]['mask'] to subselect data if set.
 
     binRange : list, optional, default = None
         Specify range for binning.
@@ -112,6 +131,12 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', binRange = None, backend =
         Specify backend:
         - 'hv' for Holoviews
         - 'pd' or 'mpl' for Pandas.hist()
+
+    Notes:
+
+    - Data to plot is specified by self.data[key][dataDict][dataType].
+    - Threshold value sets mask, this will overwrite existing selection mask.
+    - If self.data[key]['mask'] exists, this will be used if mask = True.
 
     TODO:
 
@@ -127,10 +152,20 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', binRange = None, backend =
     """
 
     # Set plot data
-    pData = self.fitMetrics['dfLong'][dataType]
+    pData = self.data[key][dataDict][dataType]
+
+    if thres is not None:
+        self.thresFits(thres = thres, dataType = dataType, key = key, dataDict = dataDict)
+
+    if ('mask' in self.data[key].keys()) and mask:
+        if len(pData) == len(self.data[key]['mask'][dataType]):
+            pData = pData[self.data[key]['mask'][dataType]]
+
+            print(f"Mask selected {self.data[key]['mask'][dataType].sum()} results (from {self.data[key]['mask'][dataType].count()}).")
 
     # Clean up data to per-fit properties (unless these are required)
-    if dataType not in ['Type','pn']:
+    # TODO: check dims instead of assuming here!
+    if (dataType not in ['Type','pn']) and (dataDict is not 'dfPF'):
         pData = pData.drop_duplicates().droplevel(['Type','pn'])
 
     # Pandas/Matplotlib histogram
