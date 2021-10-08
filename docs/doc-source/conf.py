@@ -90,9 +90,22 @@ master_doc = 'index'
 # a list of builtin themes.
 #
 # html_theme = 'alabaster'
-html_theme = 'sphinx_rtd_theme'
+# html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_book_theme"
 
 html_logo = 'figs/ePSproc_logo.png'
+
+# Sphinx book theme options, cribbed from XYZPY docs, https://github.com/jcmgray/xyzpy/blob/develop/docs/conf.py
+html_theme_options = {
+    "github_url": "https://github.com/phockett/PEMtk",
+    "repository_url": "https://github.com/phockett/PEMtk",
+    "use_repository_button": True,
+    "use_issues_button": True,
+    "use_edit_page_button": True,
+    "path_to_docs": "docs",
+    "use_fullscreen_button": False,
+    "use_download_button": False,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -105,14 +118,16 @@ html_static_path = ['_static']
 # https://github.com/readthedocs/sphinx_rtd_theme/issues/295
 # https://stackoverflow.com/questions/23211695/modifying-content-width-of-the-sphinx-theme-read-the-docs
 
-# Option (1): include .css file with fix. Applied & tested on RTD OK, 01/09/21
+# Option (1): include .css file with fix.
+# Applied & tested on RTD OK, 01/09/21
 # html_css_files = [
 #     'max_width_fix.css',
 # ]
 
 # Option (2): set theme option
 # This might also work (no additional CSS required):
-html_theme_options = {'body_max_width': '70%'}
+# DOESN'T WORK ON RTD with sphinx_rtd_theme
+# html_theme_options = {'body_max_width': '70%'}
 
 # Option (3): include .css file with patch (similar to (1), but imports theme into the patch CSS file)
 # This might work too - patches existing theme:
