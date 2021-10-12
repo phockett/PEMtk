@@ -89,13 +89,20 @@ master_doc = 'index'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
-# html_theme = 'sphinx_rtd_theme'
+# html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 # html_theme = "sphinx_book_theme"  # Builds OK, but lacking heading formatting? Need to set options or add CSS?
                                     # E.g. https://github.com/jcmgray/xyzpy/blob/develop/docs/_static/my-styles.css
                                     # TODO: check theme docs, https://sphinx-book-theme.readthedocs.io/en/latest/
 
 html_logo = 'figs/ePSproc_logo.png'
+
+# RTD theme options, see https://sphinx-rtd-theme.readthedocs.io/en/stable/configuring.html
+html_theme_options = {
+    "github_url": "https://github.com/phockett/PEMtk",
+    'body_max_width': '70%'
+    }
+
 
 # Sphinx book theme options, cribbed from XYZPY docs, https://github.com/jcmgray/xyzpy/blob/develop/docs/conf.py
 # html_theme_options = {
@@ -110,22 +117,15 @@ html_logo = 'figs/ePSproc_logo.png'
 # }
 
 # For Alabaster theme, see https://alabaster.readthedocs.io/en/latest/customization.html
-html_theme_options = {
-    "page_width": "80%",
-    "github_button": True,
-    "github_user": "phockett",
-    "github_repo": "PEMtk",
-    "github_url": "https://github.com/phockett/PEMtk",
-    "repository_url": "https://github.com/phockett/PEMtk",
-}
-
-#     "use_repository_button": True,
-#     "use_issues_button": True,
-#     "use_edit_page_button": True,
-#     "path_to_docs": "docs",
-#     "use_fullscreen_button": False,
-#     "use_download_button": False,
+# html_theme_options = {
+#     "page_width": "80%",
+#     "github_button": True,
+#     "github_user": "phockett",
+#     "github_repo": "PEMtk",
+#     "github_url": "https://github.com/phockett/PEMtk",
+#     "repository_url": "https://github.com/phockett/PEMtk",
 # }
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -151,6 +151,7 @@ html_static_path = ['_static']
 # html_theme_options = {'body_max_width': '70%'}
 # html_theme_options['body_max_width'] = '80%'
 # html_theme_options['page_width'] = '80%'  # For Alabaster theme, see https://alabaster.readthedocs.io/en/latest/customization.html
+                                            # NOT working!
 
 # Option (3): include .css file with patch (similar to (1), but imports theme into the patch CSS file)
 # This might work too - patches existing theme:
