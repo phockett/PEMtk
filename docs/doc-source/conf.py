@@ -122,9 +122,9 @@ html_static_path = ['_static']
 
 # Option (1): include .css file with fix.
 # Applied & tested on RTD OK, 01/09/21
-# html_css_files = [
-#     'max_width_fix.css',
-# ]
+html_css_files = [
+    'max_width_fix.css',
+]
 
 # Option (2): set theme option
 # This might also work (no additional CSS required):
