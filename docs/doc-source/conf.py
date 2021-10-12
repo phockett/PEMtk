@@ -111,10 +111,10 @@ html_logo = 'figs/ePSproc_logo.png'
 
 # For Alabaster theme, see https://alabaster.readthedocs.io/en/latest/customization.html
 html_theme_options = {
-    "page_width": "80%"
-    "github_button": True
-    "github_user": "phockett"
-    "github_repo": "PEMtk"
+    "page_width": "80%",
+    "github_button": True,
+    "github_user": "phockett",
+    "github_repo": "PEMtk",
     "github_url": "https://github.com/phockett/PEMtk",
     "repository_url": "https://github.com/phockett/PEMtk",
 }
