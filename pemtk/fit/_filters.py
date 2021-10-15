@@ -1,5 +1,6 @@
 # PEMtk functions for data filtering
 # Some similarities to existing ePSproc stuff, but specific to Pandas DataFrame for fit analysis (?)
+# See also TMO-Dev routines, some pasted in below for ref (NOT IMPLEMENTED)
 # 28/09/21
 
 # See ep.util.misc.checkDims - just added basic PD support.
@@ -13,6 +14,8 @@ def thresFits(self, thres = None, dataType = None, key = 'fits', dataDict = 'dfL
 
     For more sophisticated multi-param filtering, see TMO-DEV filterData.
     Should be applicable here for Pandas data too...?
+
+    TODO: more sophisticated methods, np or pd masked arrays?
     """
 
     if dataType is not None:

@@ -68,6 +68,8 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
     # Set index names
     dfLong.index.names = outputIndex
 
+    # Set dType attrib for later.
+    dfLong.attrs['dType'] = 'Params Long'
 
     # Set ref values too, if present
     if hasattr(self,'params'):
@@ -83,6 +85,7 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
         # Stack to long-format PD
         dfRef = pd.DataFrame(refDataDict).T
         dfRef.index.names = outputIndex
+        dfRef.attrs['dType'] = 'Params Ref'
 
     else:
         dfRef = None
