@@ -63,7 +63,7 @@ class pemtkFit(dataClass):
     Class prototype for pemtkFit class. Dev version builds on dataClass, and adds some basic subselection & fitting capabilities.
     """
 
-    from ._analysis import analyseFits, fitHist  #, scopeTest
+    from ._analysis import analyseFits, fitHist, fitsReport, classifyFits, phaseCorrection, _setData, _setWide  #, scopeTest
     from ._conv import pdConv, pdConvSetFit
     from ._filters import thresFits
     from ._parallel import multiFit
