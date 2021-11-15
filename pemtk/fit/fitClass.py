@@ -58,12 +58,20 @@ from pemtk.util import hvPlotters  # Imports full module, include setup routines
 # print(hvFlag)  # Fails
 # print(hvPlotters.hv)
 
+try:
+    import seaborn as sns
+    snsFlag = True
+except ImportError:
+    print("*** Seaborn not found: some plotting functions may be unavailable.")
+    snsFlag = False
+
+
 class pemtkFit(dataClass):
     """
     Class prototype for pemtkFit class. Dev version builds on dataClass, and adds some basic subselection & fitting capabilities.
     """
 
-    from ._analysis import analyseFits, fitHist, fitsReport, classifyFits, phaseCorrection, _setData, _setWide  #, scopeTest
+    from ._analysis import analyseFits, fitHist, fitsReport, classifyFits, paramPlot, phaseCorrection, _setData, _setWide  #, scopeTest
     from ._conv import pdConv, pdConvSetFit
     from ._filters import thresFits
     from ._parallel import multiFit
@@ -108,6 +116,11 @@ class pemtkFit(dataClass):
             self.hv = False
             self.setPlotDefaults = None
 
+        # Same for Seaborn.
+        if snsFlag:
+            self.sns = sns
+        else:
+            self.sns = False
 
     # def setFitSubset(self, thres = None, selDims = None, thresDims = None, sq = True, drop = True):
     #     """

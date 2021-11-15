@@ -49,7 +49,7 @@ def _setDefaultFits(self, dataRange):
 # Should push corrected phase back to original table as new dim?
 # Phase correction/shift function
 
-def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phaseLabel = 'p'):
+def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phaseLabel = 'p'):  #, drop_level=False, renameLevel=True):
     """
     Phase correction/shift/wrap function.
 
@@ -58,6 +58,10 @@ def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phas
     - Assumes full Pandas tabulated wide-form dataset as input.
     - Supply dfRef to use reference phase (abs phase values), otherwise will be relative with refParam set to zero.
     - wrapFlag: wrap to -pi:pi range? Default True.
+
+    TODO: implement dim preservation? Currently handled by calling fn., and returned values will have Type dim dropped here.
+            Setting "drop_level=False" to xs() would fix this.
+            Stated to implement, but skipped for now.
 
     """
 
@@ -69,7 +73,7 @@ def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phas
     if refParam is None:
         refParam = phasesIn.columns[0]  # Default ref phase
 
-    refPhase = dfWide[refParam].xs(phaseLabel,level='Type')
+    refPhase = dfWide[refParam].xs(phaseLabel,level='Type')  #,drop_level=drop_level)
 #     print(refPhase)
 
     # For abs ref phase, set that too
@@ -82,6 +86,10 @@ def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phas
 
     # Substract (shift) by refPhase
     phaseCorr = phaseCorr.subtract(refPhase, axis='index')  # Subtract ref phase, might be messing up sign here?
+
+    # Rename dim level? Only valid if level is NOT dropped
+    # if renameLevel and ~drop_level:
+    #     phaseCorr.index = dfOut.index.set_levels(['m','pc'], level = 'Type')  # Set 'pc' Type - NOTE that index keeps all types.
 
     # Rectify phases...? Defined here for -pi:pi range.
     if wrapFlag:

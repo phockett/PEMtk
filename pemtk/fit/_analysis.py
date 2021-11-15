@@ -122,6 +122,7 @@ def _setData(self, key, dataDict, dataType = None, thres = None, mask = True):
     # Threshold
     if thres is not None:
         self.thresFits(thres = thres, dataType = dataType, key = key, dataDict = dataDict)
+        # pData = pData[self.data[key]['mask'][dataType]]
 
     if ('mask' in self.data[key].keys()) and mask:
         try:
@@ -241,7 +242,7 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
     bins : int or list, default = None
         Bins setting for classifier
         - Set as None for default case, will bin by (min - min*0.05, min*5, 10)
-        - Set as int to define a specific number of (equally spaced) bins, for (min - min*0.05, min*10, numbins)
+        - Set as int to define a specific number of (equally spaced) bins, for (min - min*0.05, min*5, numbins)
         - Set as a list [start,stop] or [start,stop,bins] for specific range.
         - Set as list (>3 elements) to define specific bin intervals.
 
@@ -323,7 +324,7 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
                         if self.data[key][table].attrs['dType'].endswith('Long'):
                             # Specific update for wide params table.
                             if self.data[key][table].attrs['dType'] == 'Params Long':
-                                self.data[key][table][group] = pd.cut(self.data[key][table][group], bins = bins, labels = labels)  # Ugh, just do it again for Params Long, otherwise multiindex gets dropped.
+                                self.data[key][table][group] = pd.cut(self.data[key][table][dataType], bins = bins, labels = labels)  # Ugh, just do it again for Params Long, otherwise multiindex gets dropped.
                                 self._setWide(key = key, dataDict = table, indexDims = ['Fit','Type',group])
 
                             else:
@@ -346,13 +347,17 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
 
 def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide', dataRef = 'dfRef', useRef = True, returnFlag = False, **kwargs):
     """
-    Wrapper for _util.phaseCorrection() (functional form).
+    Wrapper for ._util.phaseCorrection() (functional form).
+
+    NOTE: this currently only sets phaseCorrected data in wide-form dataset, self.data[key][dataOut]. May want to push to long-form too? (Otherwise this will be lost by self._setWide().)
+
     """
 
     # Work with copy and set phase corr data to this...
     dataIn = self.data[key][dataDict].copy()
     # dataIn.index = dataIn.index.set_levels(['m','pc'], level = 'Type')  # Set 'pc' Type
     dataInWide = self._setWide(dataIn = dataIn, returnFlag = True)  # Set to wide form
+    refDims = dataInWide.index.names
 
     if useRef:
         dfRef = self.data[key][dataRef]
@@ -368,9 +373,10 @@ def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide',
     # dfOut = dfOut[~dfOut.index.duplicated(keep='first')]  # Remove any duplicated indexers
 
     # For wide data - this will be phase only in current case (as returned from phaseCorrFunc())
-    # Add Type & reindex
+    # Add Type & reindex (lost in XC in phaseCorrFunc, but may change in future)
     dfOut['Type'] = 'pc'
-    dfOut = dfOut.reset_index().set_index(['Fit','Type'])  # OK, returns new DF
+    # dfOut = dfOut.reset_index().set_index(['Fit','Type'])  # OK, returns new DF
+    dfOut = dfOut.reset_index().set_index(refDims)  # Match to original df
     dfOut = pd.concat([dfOut, dataInWide]).sort_index()  # NOTE - this seems to mess up with Multiindex IF dim ordering is different. UGH. HORRIBLE.
                                             # Update: Dim ordering should now be enforced in self._setWide() for dataInWide.
     # dfOut.attrs['dType'] = 'Params Wide'
@@ -383,6 +389,11 @@ def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide',
     else:
         self.data[key][dataOut] = dfOut
 
+# ***************************************************************************************
+#
+# Plotters for fit data/analysis.
+#
+#
 
 def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = 'dfPF',
             thres = None, mask = True, binRange = None, backend = 'hv'):
@@ -396,6 +407,7 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = '
         - Set as string for various auto options.
         - Set as int to define a specific number of (equally spaced) bins.
         - Set as list to define specific bin intervals.
+        NOTE: some combinations currently not working with 'hv' backend.
 
     dataType : str, default = 'redchi'
         DataType to histogram.
@@ -438,10 +450,12 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = '
     - Implement, but better, with decorators for data checking & selection.
     - Import chain: currently using util.hvPlotters.py > self.hv for backend, but could also use a decorator here?
     - Data subselection by threshold or range. (Again see TMO-DEV routines for ideas.)
+    - Fix binning issues with certain cases.
 
     - Holoviews stuff
        - Fix data subset to plotter, otherwise get full dataset to tooltip.
        - Hist bar options to fix. UPDATE: now set to bins='auto' as default, which works well.
+       - See hv.help(histogram) or http://holoviews.org/user_guide/Transforming_Elements.html for more.
 
     """
 
@@ -473,16 +487,89 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = '
     elif backend is 'hv':
         # Set bins, treat int bins as separate parameter num_bins for HV.
         # For HV: http://holoviews.org/reference_manual/holoviews.operation.html#holoviews.operation.histogram
-        bins = (bins if not isinstance(bins,int) else None)
+        binsHV = (bins if not isinstance(bins,int) else None)
         num_bins = (bins if isinstance(bins,int) else None)
 
         # bin_range = (bins if (isinstance(bins,list) & (len(bins)==2)) else None) # Use independent pRange parameter for this
         if binRange is not None:
-            bins = None  # bin_range only applies if bins = None.
+            binsHV = None  # bin_range only applies if bins = None.
+        # else:
 
         # Create plot object.
-        hvObj = self.hv.Scatter(pData.reset_index(), kdims=dataType).hist(dimension=[dataType,'Fit'], bins = bins, num_bins = num_bins, bin_range = binRange)
+        # print(bins, binsHV, num_bins, binRange)
+        hvObj = self.hv.Scatter(pData.reset_index(), kdims=dataType).hist(dimension=[dataType,'Fit'], bins = binsHV, num_bins = num_bins, bin_range = binRange)
 
         # Code from showPlot()
         if self.__notebook__:     # and (not returnImg):
             display(hvObj)  # If notebook, use display to push plot.
+
+
+def paramPlot(self, dataType = 'pc', level = 'Type', sel = None, selLevel = 'redchiGroup',
+            hue = None, hRound = 7, x='Param', y='value',
+            key = 'fits', dataDict = 'dfWide', dataPF = 'dfPF',
+            # thres = None, mask = True,
+            backend = 'sns', returnFlag = False):
+    """
+    Basic scatter-plot of parameter values by name/type.
+
+    Currently supports Seaborn for back-end only, and requires wide-form dataDict as input.
+
+    TODO:
+    - better and more concise dim handling for multi-level selection.
+    - HV support?
+
+    Currently: have `selLevel` and `hue`, which must be different in general.
+    - `sel` and `selLevel` define subselection by a value in a column, e.g. sel = 'E', selLevel = 'redchiGroup' for values E in column 'selLevel'
+    - `hue` specifies hue mapping for Seaborn plot, which must be a column name.
+    - If `hue` is not in input data, it will be taken from the per-fit dataframe.
+
+    """
+
+    # Set plot data from dict.
+    # dataPlot = data.data[key][dataDict].xs(dataType,level='Type')
+    pData = self._setData(key, dataDict)  #, dataType = dataType)  #,  thres = thres, mask = mask)
+
+    # Subselect with XS
+    pData = pData.xs(dataType, level=level)
+
+    # Further subselection if specified
+    if sel is not None:
+        pData = pData.xs(sel, level = selLevel)  # , drop_level=False)
+
+    # Melt to long form for sns.catplot functionality
+    # TODO: check & fix any non-consistent dim handling here!
+    if hue is None:
+        hue = selLevel
+
+    hDims = subselectDims(pData, refDims = hue)
+    if hDims:
+        pDataLong = pData.reset_index().melt(id_vars=['Fit',hue])
+
+    # If hDims is missing, assume it's in daPF - reformat & merge.
+    else:
+        hData = self.data[key][dataPF][hue]  # TODO: add dim checks here.
+
+        pDataLong = pData.reset_index().melt(id_vars=['Fit'])
+        pDataLong = pDataLong.merge(hData, on = ['Fit'], how='left')
+
+        if hRound is not None:
+            # Round/rebin hue data to specified dp.
+            pDataLong[hue] = pDataLong[hue].apply(np.round, decimals = hRound)
+
+
+    # Create plot
+    if self.sns:
+        g = self.sns.catplot(x=x, y=y, hue = hue, data = pDataLong)  # pGroups + scatter plot - this shows groupings better
+        g.set_xticklabels(rotation=-60)
+
+        # Code from showPlot()
+        if self.__notebook__:     # and (not returnImg):
+            display(g)  # If notebook, use display to push plot.
+
+    else:
+        print("Seaborn not loaded, paramPlot() not available.")
+
+    if returnFlag:
+        return pDataLong
+
+# def corrPlot()
