@@ -503,8 +503,102 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = '
         if self.__notebook__:     # and (not returnImg):
             display(hvObj)  # If notebook, use display to push plot.
 
+def _mergePFLong(self, pData, key, dataPF, hue, hRound):
+    """
+    Merge per-fit data to existing dataset & force to long form.
 
-def paramPlot(self, dataType = 'pc', level = 'Type', sel = None, selLevel = 'redchiGroup',
+    Used for Seaborn plotting routines with hue mapping.
+    """
+
+    hDims = subselectDims(pData, refDims = hue)
+    if hDims:
+        pDataLong = pData.reset_index().melt(id_vars=['Fit',hue])
+
+    # If hDims is missing, assume it's in daPF - reformat & merge.
+    else:
+        hData = self.data[key][dataPF][hue]  # TODO: add dim checks here.
+
+        pDataLong = pData.reset_index().melt(id_vars=['Fit'])
+        pDataLong = pDataLong.merge(hData, on = ['Fit'], how='left')
+
+        if hRound is not None:
+            # Round/rebin hue data to specified dp.
+            pDataLong[hue] = pDataLong[hue].apply(np.round, decimals = hRound)
+
+    return pDataLong
+
+
+def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRound = None, dataPF = 'dfPF', **kwargs):
+    """
+    Similar to paramPlot(), but set for correlation matrix plotter.
+
+    This requires wide-form parameters data self.data['fits']['dfWide'].
+
+    **kwargs are passed to Seaborn's pairplot routine, https://seaborn.pydata.org/generated/seaborn.pairplot.html
+
+    TODO: if numerical data columns are added for hue mapping they may result in additional plots too.
+
+    TODO: add HV gridmatrix + linked brushing: http://holoviews.org/user_guide/Linked_Brushing.html
+
+    """
+
+    # Set plot data from dict.
+    # dataPlot = data.data[key][dataDict].xs(dataType,level='Type')
+    pData = self._setData(key, dataDict)  #, dataType = dataType)  #,  thres = thres, mask = mask)
+
+    # Handle hue
+    # pDataLong = self._mergePFLong(pData, hue)  # Function currently sets long form, here need to retain wide!
+    hDims = subselectDims(pData, refDims = hue)
+
+    if hDims:
+        pData = pData.reset_index().drop('Fit', axis=1)  # Use existing column in dataframe
+    else:
+        pData = pData.reset_index()  #.drop('Fit', axis=1)
+        hData = self.data[key][dataPF][hue]
+        pData = pData.merge(hData, on = ['Fit'], how='left').drop('Fit', axis=1)  # Add per-fit coloumn.
+
+    if hRound is not None:
+        # Round/rebin hue data to specified dp.
+        pData[hue] = pData[hue].apply(np.round, decimals = hRound)
+
+
+    # Create plot
+    # if self.sns:
+    #     g = self.sns.pairplot(pData, hue = hue, **kwargs)
+    #     # sns.pairplot(data.data['fits']['dfWide'], hue='redchiGroup')
+    #     # g.set_xticklabels(rotation=-60)
+    #
+    #     # Code from showPlot()
+    #     if self.__notebook__:     # and (not returnImg):
+    #         display(g)  # If notebook, use display to push plot.
+    #
+    # else:
+    #     print("Seaborn not loaded, paramPlot() not available.")
+
+    # Create plot
+    if self.sns and (backend == 'sns'):
+        g = self.sns.pairplot(pData, hue = hue, **kwargs)
+        # g.set_xticklabels(rotation=-60)
+
+    # elif self.hv and (backend == 'hv'):
+    #     g = self.hv.Scatter(pDataLong, kdims=x, vdims=[y,hue])   # For hv case need to include hue as vdims (or will be dropped). hv to PD class may be cleaner?
+    #     g.opts(color=hue, size=10)
+
+    else:
+        g = ''
+        # print("Please set 'sns' (Seaborn or Holoviews backend loaded, paramPlot() not available.")
+        print(f"Plotting backed '{backend}' unavailable.")
+
+    # Code from showPlot()
+    if self.__notebook__ and g:     # and (not returnImg):
+        display(g)  # If notebook, use display to push plot.
+
+
+    self.data['plotData'] = pData
+
+
+
+def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redchiGroup',
             hue = None, hRound = 7, x='Param', y='value',
             key = 'fits', dataDict = 'dfWide', dataPF = 'dfPF',
             # thres = None, mask = True,
@@ -516,12 +610,17 @@ def paramPlot(self, dataType = 'pc', level = 'Type', sel = None, selLevel = 'red
 
     TODO:
     - better and more concise dim handling for multi-level selection.
+    - Box/violin plot options.
     - HV support?
+       - Basic support now in place, but cmapping needs some work for non-cat data. SEE NOTES ELSEWHERE!
+       - Also breaks for subselection case unless another hue dim is set.
 
     Currently: have `selLevel` and `hue`, which must be different in general.
     - `sel` and `selLevel` define subselection by a value in a column, e.g. sel = 'E', selLevel = 'redchiGroup' for values E in column 'selLevel'
     - `hue` specifies hue mapping for Seaborn plot, which must be a column name.
     - If `hue` is not in input data, it will be taken from the per-fit dataframe.
+
+    Ref: Seaborn catplot, https://seaborn.pydata.org/generated/seaborn.catplot.html
 
     """
 
@@ -541,33 +640,43 @@ def paramPlot(self, dataType = 'pc', level = 'Type', sel = None, selLevel = 'red
     if hue is None:
         hue = selLevel
 
-    hDims = subselectDims(pData, refDims = hue)
-    if hDims:
-        pDataLong = pData.reset_index().melt(id_vars=['Fit',hue])
+    # hDims = subselectDims(pData, refDims = hue)
+    # if hDims:
+    #     pDataLong = pData.reset_index().melt(id_vars=['Fit',hue])
+    #
+    # # If hDims is missing, assume it's in daPF - reformat & merge.
+    # else:
+    #     hData = self.data[key][dataPF][hue]  # TODO: add dim checks here.
+    #
+    #     pDataLong = pData.reset_index().melt(id_vars=['Fit'])
+    #     pDataLong = pDataLong.merge(hData, on = ['Fit'], how='left')
+    #
+    #     if hRound is not None:
+    #         # Round/rebin hue data to specified dp.
+    #         pDataLong[hue] = pDataLong[hue].apply(np.round, decimals = hRound)
 
-    # If hDims is missing, assume it's in daPF - reformat & merge.
-    else:
-        hData = self.data[key][dataPF][hue]  # TODO: add dim checks here.
-
-        pDataLong = pData.reset_index().melt(id_vars=['Fit'])
-        pDataLong = pDataLong.merge(hData, on = ['Fit'], how='left')
-
-        if hRound is not None:
-            # Round/rebin hue data to specified dp.
-            pDataLong[hue] = pDataLong[hue].apply(np.round, decimals = hRound)
-
+    pDataLong = self._mergePFLong(pData, key, dataPF, hue, hRound)  # Functionalised version of above.
 
     # Create plot
-    if self.sns:
+    if self.sns and (backend == 'sns'):
         g = self.sns.catplot(x=x, y=y, hue = hue, data = pDataLong)  # pGroups + scatter plot - this shows groupings better
         g.set_xticklabels(rotation=-60)
 
-        # Code from showPlot()
-        if self.__notebook__:     # and (not returnImg):
-            display(g)  # If notebook, use display to push plot.
+    elif self.hv and (backend == 'hv'):
+        g = self.hv.Scatter(pDataLong, kdims=x, vdims=[y,hue])   # For hv case need to include hue as vdims (or will be dropped). hv to PD class may be cleaner?
+        g.opts(color=hue, size=10)
 
     else:
-        print("Seaborn not loaded, paramPlot() not available.")
+        g = ''
+        # print("Please set 'sns' (Seaborn or Holoviews backend loaded, paramPlot() not available.")
+        print(f"Plotting backed '{backend}' unavailable.")
+
+    # Code from showPlot()
+    if self.__notebook__ and g:     # and (not returnImg):
+        display(g)  # If notebook, use display to push plot.
+
+    # Output current plot data for ref.
+    self.data['plotData'] = pDataLong
 
     if returnFlag:
         return pDataLong
