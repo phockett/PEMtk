@@ -528,7 +528,8 @@ def _mergePFLong(self, pData, key, dataPF, hue, hRound):
     return pDataLong
 
 
-def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRound = None, dataPF = 'dfPF', **kwargs):
+def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRound = None, dataPF = 'dfPF',
+            backend = 'sns', **kwargs):
     """
     Similar to paramPlot(), but set for correlation matrix plotter.
 
