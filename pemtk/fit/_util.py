@@ -49,7 +49,7 @@ def _setDefaultFits(self, dataRange):
 # Should push corrected phase back to original table as new dim?
 # Phase correction/shift function
 
-def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phaseLabel = 'p'):  #, drop_level=False, renameLevel=True):
+def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phaseLabel = 'p', absFlag = False):  #, drop_level=False, renameLevel=True):
     """
     Phase correction/shift/wrap function.
 
@@ -58,6 +58,7 @@ def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phas
     - Assumes full Pandas tabulated wide-form dataset as input.
     - Supply dfRef to use reference phase (abs phase values), otherwise will be relative with refParam set to zero.
     - wrapFlag: wrap to -pi:pi range? Default True.
+    - absFlag: set abs values (drop signs)? Default False, otherwise sets all values to abs().
 
     TODO: implement dim preservation? Currently handled by calling fn., and returned values will have Type dim dropped here.
             Setting "drop_level=False" to xs() would fix this.
@@ -84,7 +85,7 @@ def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phas
 
     print(f"Set ref param = {refParam}")
 
-    # Substract (shift) by refPhase
+    # Subtract (shift) by refPhase
     phaseCorr = phaseCorr.subtract(refPhase, axis='index')  # Subtract ref phase, might be messing up sign here?
 
     # Rename dim level? Only valid if level is NOT dropped
@@ -96,8 +97,11 @@ def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phas
         # phaseCorrRec = phaseCorr.apply(lambda x: np.sign(x)*np.mod(np.abs(x),np.pi)) # This will wrap towards zero, should be OK for zero ref phase case.
 
         # Use arctan, defined for -pi:pi range
-        return np.arctan2(np.sin(phaseCorr), np.cos(phaseCorr))
+        phaseCorr =  np.arctan2(np.sin(phaseCorr), np.cos(phaseCorr))
+
+    # Set abs values? (Do this last!)
+    if absFlag:
+        phaseCorr = np.abs(phaseCorr)
 
 
-    else:
-        return phaseCorr
+    return phaseCorr

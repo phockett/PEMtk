@@ -16,6 +16,9 @@ import pandas as pd
 import numpy as np
 import xarray as xr
 
+import matplotlib.pyplot as plt   # For alternative sns routines
+
+
 from epsproc import matEleSelector, multiDimXrToPD
 from epsproc.util.misc import subselectDims
 
@@ -512,7 +515,11 @@ def _mergePFLong(self, pData, key, dataPF, hue, hRound):
 
     hDims = subselectDims(pData, refDims = hue)
     if hDims:
-        pDataLong = pData.reset_index().melt(id_vars=['Fit',hue])
+        # Annoying special case.
+        if hue != 'Fit':
+            pDataLong = pData.reset_index().melt(id_vars=['Fit',hue])
+        else:
+            pDataLong = pData.reset_index().melt(id_vars=['Fit'])
 
     # If hDims is missing, assume it's in daPF - reformat & merge.
     else:
@@ -528,12 +535,15 @@ def _mergePFLong(self, pData, key, dataPF, hue, hRound):
     return pDataLong
 
 
-def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRound = None, dataPF = 'dfPF',
-            backend = 'sns', **kwargs):
+def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRound = None,
+            dataType = None, level = None, sel = None, selLevel = 'redchiGroup',
+            dataPF = 'dfPF', plotDict = 'plots',
+            backend = 'sns', pairgrid = False, **kwargs):
     """
     Similar to paramPlot(), but set for correlation matrix plotter.
 
     This requires wide-form parameters data self.data['fits']['dfWide'].
+    Two levels of selection are currently supported (index data only, NOT columns)
 
     **kwargs are passed to Seaborn's pairplot routine, https://seaborn.pydata.org/generated/seaborn.pairplot.html
 
@@ -541,18 +551,32 @@ def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRoun
 
     TODO: add HV gridmatrix + linked brushing: http://holoviews.org/user_guide/Linked_Brushing.html
 
+    TODO: FIX HORRIBLE SELECTION ROUTINES.
+
     """
 
     # Set plot data from dict.
     # dataPlot = data.data[key][dataDict].xs(dataType,level='Type')
     pData = self._setData(key, dataDict)  #, dataType = dataType)  #,  thres = thres, mask = mask)
 
+    # Basic single-level selection
+    if dataType is not None:
+        pData = pData.xs(dataType, level=level)
+
+    # Further subselection if specified
+    if sel is not None:
+        pData = pData.xs(sel, level = selLevel)  # , drop_level=False)
+
     # Handle hue
     # pDataLong = self._mergePFLong(pData, hue)  # Function currently sets long form, here need to retain wide!
     hDims = subselectDims(pData, refDims = hue)
 
     if hDims:
-        pData = pData.reset_index().drop('Fit', axis=1)  # Use existing column in dataframe
+        pData = pData.reset_index()
+        # Annoying special case.
+        if hue != 'Fit':
+            pData = pData.drop('Fit', axis=1)  # Use existing column in dataframe
+
     else:
         pData = pData.reset_index()  #.drop('Fit', axis=1)
         hData = self.data[key][dataPF][hue]
@@ -578,12 +602,18 @@ def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRoun
 
     # Create plot
     if self.sns and (backend == 'sns'):
-        g = self.sns.pairplot(pData, hue = hue, **kwargs)
-        # g.set_xticklabels(rotation=-60)
+        if (pData[hue].drop_duplicates().count() > 30) or pairgrid:
+            # PairGrid - much faster for continuous data cmap
+            # From https://stackoverflow.com/questions/60859082/is-there-a-way-to-color-the-points-in-a-python-seaborn-pairplot-with-a-quantitat
+            g = self.sns.PairGrid(pData, hue = hue, **kwargs).map(plt.scatter)
+
+        else:
+            g = self.sns.pairplot(pData, hue = hue, **kwargs)
+            # g.set_xticklabels(rotation=-60)
 
     # elif self.hv and (backend == 'hv'):
-    #     g = self.hv.Scatter(pDataLong, kdims=x, vdims=[y,hue])   # For hv case need to include hue as vdims (or will be dropped). hv to PD class may be cleaner?
-    #     g.opts(color=hue, size=10)
+    #  TODO: implement gridmatrix here. See http://holoviews.org/user_guide/Linked_Brushing.html
+
 
     else:
         g = ''
@@ -594,15 +624,19 @@ def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRoun
     if self.__notebook__ and g:     # and (not returnImg):
         display(g)  # If notebook, use display to push plot.
 
+    if not plotDict in self.data.keys():
+        self.data[plotDict] = {}
 
-    self.data['plotData'] = pData
+    self.data[plotDict]['corrData'] = pData
+    self.data[plotDict]['corrPlot'] = g
 
 
 
 def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redchiGroup',
             hue = None, hRound = 7, x='Param', y='value',
-            key = 'fits', dataDict = 'dfWide', dataPF = 'dfPF',
+            key = 'fits', dataDict = 'dfWide', dataPF = 'dfPF', plotDict = 'plots',
             # thres = None, mask = True,
+            hvType = None,
             backend = 'sns', returnFlag = False):
     """
     Basic scatter-plot of parameter values by name/type.
@@ -610,11 +644,13 @@ def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redc
     Currently supports Seaborn for back-end only, and requires wide-form dataDict as input.
 
     TODO:
-    - better and more concise dim handling for multi-level selection.
-    - Box/violin plot options.
+    - better and more concise dim handling for multi-level selection. Integrate to single dict of selectors? (See tmo-dev?)
+    - Box/violin plot options. Also option to drop scatter plot in these cases (now partially implemented for HV only).
     - HV support?
        - Basic support now in place, but cmapping needs some work for non-cat data. SEE NOTES ELSEWHERE!
        - Also breaks for subselection case unless another hue dim is set.
+       - 18/11/21: better, but messy, support now in place. Includes Violin & BoxWhisker options.
+       - TODO: implement grouping and/or holomap for extra dims.
 
     Currently: have `selLevel` and `hue`, which must be different in general.
     - `sel` and `selLevel` define subselection by a value in a column, e.g. sel = 'E', selLevel = 'redchiGroup' for values E in column 'selLevel'
@@ -622,15 +658,33 @@ def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redc
     - If `hue` is not in input data, it will be taken from the per-fit dataframe.
 
     Ref: Seaborn catplot, https://seaborn.pydata.org/generated/seaborn.catplot.html
+    Ref: HV scatter,
+
+    For usage notes see https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_multiproc_class_analysis_141121-tidy.html
 
     """
+
+    # ADDTIONAL NOTES from PKG version testing.
+    # TODO: fix issues with hue mapping!
+    #
+    # data.paramPlot(backend='hv')  # OK
+    # data.paramPlot(dataType = 'm', hue = 'redchiGroup', backend='hv')  # OK
+    #
+    #
+    # Nope - need grouping or overlay probably, or accidentally messing up DF here?
+    # TypeError: '<' not supported between instances of 'float' and 'str'
+    # data.paramPlot(dataType = 'm', hue = 'redchi', backend='hv')
+    # data.paramPlot(dataType = None, hue = 'redchiGroup', backend='hv')
+    # data.paramPlot(dataType = None, hue = 'redchi', backend='hv')
 
     # Set plot data from dict.
     # dataPlot = data.data[key][dataDict].xs(dataType,level='Type')
     pData = self._setData(key, dataDict)  #, dataType = dataType)  #,  thres = thres, mask = mask)
 
+    # TODO: update selectors as looped dict specs?
     # Subselect with XS
-    pData = pData.xs(dataType, level=level)
+    if dataType is not None:
+        pData = pData.xs(dataType, level=level)
 
     # Further subselection if specified
     if sel is not None:
@@ -658,6 +712,12 @@ def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redc
 
     pDataLong = self._mergePFLong(pData, key, dataPF, hue, hRound)  # Functionalised version of above.
 
+    # Output current plot data for ref.
+    if not plotDict in self.data.keys():
+        self.data[plotDict] = {}
+
+    self.data[plotDict]['paramData'] = pDataLong
+
     # Create plot
     if self.sns and (backend == 'sns'):
         g = self.sns.catplot(x=x, y=y, hue = hue, data = pDataLong)  # pGroups + scatter plot - this shows groupings better
@@ -665,7 +725,20 @@ def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redc
 
     elif self.hv and (backend == 'hv'):
         g = self.hv.Scatter(pDataLong, kdims=x, vdims=[y,hue])   # For hv case need to include hue as vdims (or will be dropped). hv to PD class may be cleaner?
-        g.opts(color=hue, size=10)
+        g.opts(color=hue, size=10, jitter=0.4, alpha=0.5, colorbar = True, cmap='coolwarm', legend_position = 'right')  # Some reasonable options, although should pass as **kwargs.
+                                                                                                                        # NOTE: for cat data use legend_position = 'right' to force legend out of plot axes.
+                                                                                                                        #       For numerical data the cbar appears correctly.
+                                                                                                                        # See http://holoviews.org/_modules/holoviews/plotting/bokeh/element.html
+
+        # Add overlays if specified
+        # Not stacking order to foreground scatter plot.
+        if hvType == 'box':
+            ov = self.hv.BoxWhisker(pDataLong, kdims=x, vdims=y)
+            g = ov*g
+        elif hvType == 'violin':
+            ov = self.hv.Violin(pDataLong, kdims=x, vdims=y)
+            ov.opts(inner='stick')
+            g = ov*g
 
     else:
         g = ''
@@ -677,7 +750,10 @@ def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redc
         display(g)  # If notebook, use display to push plot.
 
     # Output current plot data for ref.
-    self.data['plotData'] = pDataLong
+    # self.data['plotData'] = pDataLong
+    # self.data['plot'] = g
+    # self.data[plotDict]['paramData'] = pData
+    self.data[plotDict]['paramPlot'] = g
 
     if returnFlag:
         return pDataLong
