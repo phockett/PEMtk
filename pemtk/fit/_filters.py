@@ -29,6 +29,29 @@ def thresFits(self, thres = None, dataType = None, key = 'fits', dataDict = 'dfL
     self.data[key]['mask'] = mask
 
 
+def _subsetFromXS(self, selectors = {}, data = None):
+    """Subselect from data using pandas.xs."""
+    dataOut = data.copy()
+
+    # Basic subselection (indexes) - needs dim checking
+    for k,v in selectors.items():
+        dataOut = dataOut.xs(v, level = k)
+
+    return dataOut
+
+
+def getFitInds(self, selectors = {}, key = 'fits', dataDict = 'dfWide', inds = 'Fit'):
+    """Get find indexes from subselection (Pandas datasets)"""
+
+    subset = self._setData(key, dataDict)
+    subset = self._subsetFromXS(selectors = selectors, data = subset)
+
+    # Grab indexes
+    index = subset.index.unique(level=inds)
+
+    return index.to_numpy()
+
+
 #************* FUNCTIONS FROM TMO-DEV
 # NOT CURRENTLY IMPLEMENTED... but might want to use these for more flexibility.
 # ALTHOUGH ALSO NOT GREAT/need some work!

@@ -1,5 +1,10 @@
 # PEMtk fitting analysis routines
 #
+# 26/11/21  v2  Most functionality now implemented.
+#               Very messy, and not well-integrated.
+#               TODO:   better integration, esp. options etc. to classes or class dicts.
+#
+#
 # 13/09/21  v1  Basic codes from dev notebook.
 #
 # Initial dev code: see https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_analysis_demo_150621-tidy.html
@@ -93,6 +98,8 @@ def analyseFits(self, dataRange = None):
                                                                        # http://xarray.pydata.org/en/stable/generated/xarray.DataArray.expand_dims.html
 
     AFxr = xr.concat(AFstack,'Fit')
+    AFxr.attrs['jobLabel'] = "BLM results (all fits)"  # TODO: put some useful info here, date, time, # fits etc.
+
     AFpd, AFxrRS = multiDimXrToPD(AFxr.squeeze().pipe(np.abs), colDims=['t'],
                                  thres = 1e-4, fillna=True)
     AFpd.attrs['dType'] = 'AF results Wide'
@@ -112,6 +119,9 @@ def analyseFits(self, dataRange = None):
     self._setWide()   # Set wide format params with current data, will reset later.
 
     self.fitsReport()  # Generate some default report data
+
+    # Dict for plot objects - TODO, currently set in plotting fncs. Should centralise & set options.
+    # self.data[]
 
 
 def _setData(self, key, dataDict, dataType = None, thres = None, mask = True):
@@ -232,6 +242,63 @@ def fitsReport(self, key = 'fits', dataDict = 'dfPF', thres = None, mask = True)
         pprint.pprint(fitReport, indent = 2)
 
     self.fitsSummary = fitReport
+
+
+# Test final param determination/report by group
+def paramsReport(self, key = 'fits', dataDict = 'dfWide', inds = {}, aggList = ['min', 'mean', 'median', 'max', 'std', 'var']):
+    """
+    Generate parameter report/metrics, defaults to self.data['fits']['dfWide'].
+    Results are printed if self.verbose, and also set to self.paramsSummary.
+
+    Parameters
+    ----------
+    key : str, optional, default = 'fits'
+        Key into main self.data dictionary.
+
+    dataDict : str, optional, default = 'dfWide'
+        Dataset to use, from self.data[key].
+        Default case is per-fit metrics.
+
+    inds : dict, optional, default = {}
+        Set of indexs to subselect from, as dictionary items.
+        E.g. xs = {'redchiGroup':'C'} will select group 'C'.
+
+    aggList : list, optional, default = ['min', 'mean', 'median', 'max', 'std', 'var']
+        List of aggregator functions to use.
+        These are passed to Pandas.agg(), a list of common functions can be found at https://pandas.pydata.org/docs/user_guide/basics.html#descriptive-statistics
+
+    TODO: consolidate indexing methods with other functions & extend to thesholds and cross-ref (column) values.
+
+    """
+
+
+    # subset = self.data[key][dataDict]
+
+    # Basic subselection (indexes) - needs dim checking
+    # for k,v in inds.items():
+    #     subset = subset.xs(v, level = k)
+
+    subset = self._setData(key, dataDict)
+    subset = self._subsetFromXS(selectors = inds, data = subset)
+
+    # Stats per dataType with groups
+    self.paramsSummary = {}
+    self.paramsSummary['data'] = subset
+    self.paramsSummary['count'] = subset.count()
+
+    # Default decribe()
+    self.paramsSummary['desc'] = subset.groupby('Type').describe().T
+
+    # Custom agg
+    self.paramsSummary['agg'] = subset.groupby('Type').agg(aggList).T
+    self.paramsSummary['agg'].index.rename(['Param','Agg'], inplace=True)
+
+    if self.verbose['main']:
+        print("Set parameter stats to self.paramsReport.")
+        if self.__notebook__:
+#             display(self.paramsReport['desc'])
+            display(self.paramsSummary['agg'])
+
 
 
 def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', group = None, bins = None, labels = None,

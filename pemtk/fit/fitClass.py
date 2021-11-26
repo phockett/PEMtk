@@ -35,6 +35,7 @@ from pemtk.data.dataClasses import dataClass
 from pemtk.util.env import isnotebook
 from epsproc import matEleSelector, multiDimXrToPD, setADMs, setPolGeoms
 from epsproc.geomFunc import afblmXprod
+from epsproc.sphPlot import plotTypeSelector
 
 # Set HTML output style for Xarray in notebooks (optional), may also depend on version of Jupyter notebook or lab, or Xr
 # See http://xarray.pydata.org/en/stable/generated/xarray.set_options.html
@@ -71,11 +72,11 @@ class pemtkFit(dataClass):
     Class prototype for pemtkFit class. Dev version builds on dataClass, and adds some basic subselection & fitting capabilities.
     """
 
-    from ._analysis import analyseFits, fitHist, fitsReport, classifyFits, corrPlot, paramPlot, phaseCorrection, _mergePFLong, _setData, _setWide  #, scopeTest
+    from ._analysis import analyseFits, fitHist, fitsReport, classifyFits, corrPlot, paramPlot, paramsReport, phaseCorrection, _mergePFLong, _setData, _setWide  #, scopeTest
     from ._conv import pdConv, pdConvSetFit
-    from ._filters import thresFits
+    from ._filters import thresFits, _subsetFromXS, getFitInds
     from ._parallel import multiFit
-    from ._plotters import BLMfitPlot, lmPlotFit
+    from ._plotters import BLMfitPlot, lmPlotFit, BLMsetPlot
     from ._sym import symCheck
     from ._util import setClassArgs, _setDefaultFits
 
@@ -121,6 +122,7 @@ class pemtkFit(dataClass):
             self.sns = sns
         else:
             self.sns = False
+
 
     # def setFitSubset(self, thres = None, selDims = None, thresDims = None, sq = True, drop = True):
     #     """
