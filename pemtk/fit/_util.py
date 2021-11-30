@@ -4,6 +4,7 @@
 # ALSO, have done this before....?  ePSproc wavefn plotting case?
 # ALSO, use a class factory here!!!
 
+import pandas as pd
 import numpy as np
 
 # Set class args at init
@@ -45,10 +46,20 @@ def _setDefaultFits(self, dataRange):
     return dataRange
 
 
+# NOTE - this will only work to add a single extra level, and then will nest.
+# More general solutions: https://stackoverflow.com/questions/14744068/prepend-a-level-to-a-pandas-multiindex
+def addColLevel(df, newCol = 'Ref', names = ['Dataset','Type']):
+    """Add top-level column to Pandas dataframe (crude)"""
+
+    oldCols = df.columns.to_list()
+    newCols = pd.MultiIndex.from_product([[newCol], oldCols], names = names)
+    df.columns = newCols
+
+
+
 # TODO: revise and wrap this properly!
 # Should push corrected phase back to original table as new dim?
 # Phase correction/shift function
-
 def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phaseLabel = 'p', absFlag = False):  #, drop_level=False, renameLevel=True):
     """
     Phase correction/shift/wrap function.

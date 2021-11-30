@@ -28,6 +28,7 @@ from epsproc import matEleSelector, multiDimXrToPD
 from epsproc.util.misc import subselectDims
 
 from ._util import phaseCorrection as phaseCorrFunc
+from ._util import addColLevel
 
 # #*** Plot setup - NOW MOVED TO .util.hvPlotters.py
 # NOTE POSSIBLE SCOPE ISSUES HERE - currently resolved by importing to self.hv, but may not be best practice.
@@ -294,12 +295,90 @@ def paramsReport(self, key = 'fits', dataDict = 'dfWide', inds = {}, aggList = [
     self.paramsSummary['agg'].index.rename(['Param','Agg'], inplace=True)
 
     if self.verbose['main']:
-        print("Set parameter stats to self.paramsReport.")
+        print("Set parameter stats to self.paramsSummary.")
         if self.__notebook__:
 #             display(self.paramsReport['desc'])
             display(self.paramsSummary['agg'])
 
 
+
+
+def paramsCompare(self, params = None, ref = None):
+    """
+    Compare extracted parameter set with reference data.
+
+    NOTE: currently assumes self.paramsSummary and self.params for aggregate fit results & reference data.
+
+    TODO:
+
+    - Better dim handling.
+    - Generalize to compare any pair of parameter sets.
+
+    """
+
+    if params is None:
+
+        if not hasattr(self, 'paramsSummary'):
+            print(f"Missing self.paramsSummary, running self.paramsReport() to generate with defaults.")
+            self.paramsReport()
+
+        params = self.paramsSummary.copy()
+
+
+    if ref is None:
+
+#         if not hasattr(self, 'params'):
+#             self.setMatEFit(paramsCons = {})
+
+
+#         dfRef = self.params.copy()
+
+        if ('dfRef' in self.data['fits'].keys()) and (self.data['fits']['dfRef'] is not None):
+            dfRef = self.data['fits']['dfRef']  # use this if already set?
+        else:
+            dfRef = self.pdConvRef()  # Set ref from self.params, will also be set if missing.
+            self.data['fits']['dfRef'] = dfRef
+
+    else:
+        dfRef = ref
+
+
+    # UGLY reshape - should be in existing routines already somewhere...? NOTE ISSUE WITH PIVOT > MULTIINDEX COLS not required here.
+    # dfRefRestack = dfRef.reset_index().set_index(['Param']).drop(['Fit','pn','stderr', 'vary', 'expr'], axis=1).pivot(columns = 'Type')
+    dfRefRestack = dfRef.reset_index().set_index(['Param'])[['Type','value']].pivot(columns = 'Type')  # Cleaner to just keep specified cols
+    dfRefRestack = dfRefRestack.droplevel(None, axis=1)  # Drop extra level, defaults to None
+    addColLevel(dfRefRestack)
+    dfRefRestack.columns = dfRefRestack.columns.reorder_levels(['Type','Dataset'])
+    # addColLevel(dfRefRestack, newCol = 'input',  names = ['Dataset','Type','Agg'])
+
+    dataFit = params['agg'].unstack().copy()  #.xs('mean', level='Agg')  #.unstack()  # Without xs to keep other Agg values.
+    # addColLevel(dataFit, newCol = 'Fit')
+
+    dataMerge = dataFit.merge(dfRefRestack, on = 'Param')
+
+    # Set differences - no trivial way to do this?
+    for item in dataMerge.columns.get_level_values('Type').unique():
+        try:
+            dataMerge[item,'diff'] = dataMerge[item]['mean'] - dataMerge[item]['Ref']   #.diff(-1)  #['m']
+        except:
+            pass   # Crude error-handling for missing dims
+
+
+    # Final sorting and reformat
+    dfOut = dataMerge.T.sort_index(level = 'Type').reindex(['mean','Ref','diff','std'], level = 'Agg')
+    dfOut.index.set_names(['Type','Source'], inplace = True)
+
+    # Set outputs
+    self.paramsSummaryComp = dfOut
+
+    if self.verbose['main']:
+        print("Set parameter comparison to self.paramsSummaryComp.")
+        if self.__notebook__:
+#             display(self.paramsReport['desc'])
+            display(self.paramsSummaryComp)
+
+
+#************* Classifications & transformations
 
 def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', group = None, bins = None, labels = None,
                     plotHist = True, propagate = True):
@@ -458,6 +537,10 @@ def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide',
         return dfOut
     else:
         self.data[key][dataOut] = dfOut
+
+
+
+
 
 # ***************************************************************************************
 #
@@ -627,6 +710,8 @@ def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRoun
     pData = self._setData(key, dataDict)  #, dataType = dataType)  #,  thres = thres, mask = mask)
 
     # Basic single-level selection
+    # TODO: update selectors as looped dict specs?
+    # SEE _util._subsetFromXS
     if dataType is not None:
         pData = pData.xs(dataType, level=level)
 
@@ -749,6 +834,7 @@ def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redc
     pData = self._setData(key, dataDict)  #, dataType = dataType)  #,  thres = thres, mask = mask)
 
     # TODO: update selectors as looped dict specs?
+    # SEE _util._subsetFromXS
     # Subselect with XS
     if dataType is not None:
         pData = pData.xs(dataType, level=level)

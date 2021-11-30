@@ -72,8 +72,8 @@ class pemtkFit(dataClass):
     Class prototype for pemtkFit class. Dev version builds on dataClass, and adds some basic subselection & fitting capabilities.
     """
 
-    from ._analysis import analyseFits, fitHist, fitsReport, classifyFits, corrPlot, paramPlot, paramsReport, phaseCorrection, _mergePFLong, _setData, _setWide  #, scopeTest
-    from ._conv import pdConv, pdConvSetFit
+    from ._analysis import analyseFits, fitHist, fitsReport, classifyFits, corrPlot, paramPlot, paramsReport, paramsCompare, phaseCorrection, _mergePFLong, _setData, _setWide  #, scopeTest
+    from ._conv import pdConv, pdConvRef, pdConvSetFit
     from ._filters import thresFits, _subsetFromXS, getFitInds
     from ._parallel import multiFit
     from ._plotters import BLMfitPlot, lmPlotFit, BLMsetPlot
@@ -393,6 +393,10 @@ class pemtkFit(dataClass):
         # return params, lmmu
         self.params = params
         self.lmmu = lmmu
+
+        # Set also to data dict for easy reference later (handy for quick pickle save/load)
+        self.data[self.subKey]['params'] = self.params
+        self.data[self.subKey]['lmmu'] = self.lmmu
 
         if self.verbose:
             if self.__notebook__:

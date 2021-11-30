@@ -73,19 +73,21 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
 
     # Set ref values too, if present
     if hasattr(self,'params'):
-        for n,i in enumerate(self.params.items()):
-        #     print(n,i)
+        # for n,i in enumerate(self.params.items()):
+        # #     print(n,i)
+        #
+        #     pmType = i[0][0]
+        #     refDataDict[('ref', pmType, n)] = {j:getattr(i[1],j) for j in paramVars}
+        #     refDataDict[('ref', pmType, n)]['Param'] = i[0][2:]  # Use name + type for easier plotting later?
+        # #     dataDict[(fitInd, n)]['Type'] = i[0][0]
+        # #     dataDict[n]['Fit'] = fitInd  # As column
+        #
+        # # Stack to long-format PD
+        # dfRef = pd.DataFrame(refDataDict).T
+        # dfRef.index.names = outputIndex
+        # dfRef.attrs['dType'] = 'Params Ref'
 
-            pmType = i[0][0]
-            refDataDict[('ref', pmType, n)] = {j:getattr(i[1],j) for j in paramVars}
-            refDataDict[('ref', pmType, n)]['Param'] = i[0][2:]  # Use name + type for easier plotting later?
-        #     dataDict[(fitInd, n)]['Type'] = i[0][0]
-        #     dataDict[n]['Fit'] = fitInd  # As column
-
-        # Stack to long-format PD
-        dfRef = pd.DataFrame(refDataDict).T
-        dfRef.index.names = outputIndex
-        dfRef.attrs['dType'] = 'Params Ref'
+        dfRef = self.pdConvRef(paramVars, outputIndex)  # Functionalised version
 
     else:
         dfRef = None
@@ -93,6 +95,46 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
 
 
     return(dfLong, dfRef)
+
+
+def pdConvRef(self, paramVars = ['value'], outputIndex = ['Fit','Type','pn']):
+    """
+    Convert reference params set to reference PD table.
+
+    Basic routine stripped from main pdConv() method for reuse elsewhere.
+
+    TODO: add flexibility here.
+
+    """
+
+    # If params are missing, try to set them
+    if not hasattr(self,'params'):
+        # Check if set in subset (only in code as of 29/11/21)
+        try:
+            self.params = self.data[self.subKey]['params']
+            self.lmmu = self.data[self.subKey]['lmmu']
+
+        except:
+            print(f"self.params not set, setting ref values from self.data[{self.subKey}]['matE'] without constraints.")
+            self.setMatEFit(paramsCons = {})
+    
+    refDataDict = {}
+
+    for n,i in enumerate(self.params.items()):
+    #     print(n,i)
+
+        pmType = i[0][0]
+        refDataDict[('ref', pmType, n)] = {j:getattr(i[1],j) for j in paramVars}
+        refDataDict[('ref', pmType, n)]['Param'] = i[0][2:]  # Use name + type for easier plotting later?
+    #     dataDict[(fitInd, n)]['Type'] = i[0][0]
+    #     dataDict[n]['Fit'] = fitInd  # As column
+
+    # Stack to long-format PD
+    dfRef = pd.DataFrame(refDataDict).T
+    dfRef.index.names = outputIndex
+    dfRef.attrs['dType'] = 'Params Ref'
+
+    return dfRef
 
 
 def pdConvSetFit(self, matE, colDim = 'it'):
