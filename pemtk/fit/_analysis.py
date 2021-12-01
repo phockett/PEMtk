@@ -303,16 +303,36 @@ def paramsReport(self, key = 'fits', dataDict = 'dfWide', inds = {}, aggList = [
 
 
 
-def paramsCompare(self, params = None, ref = None):
+def paramsCompare(self, params = None, ref = None, phaseCorr = True,
+                    phaseCorrParams = {}):
     """
     Compare extracted parameter set with reference data.
 
     NOTE: currently assumes self.paramsSummary and self.params for aggregate fit results & reference data.
 
+    Parameters
+    ----------
+    params : pd.DataFrame, optional, default = None
+        Fit parameters to tabulate.
+        Will use self.paramsSummary in default case (and run self.paramsReport() if missing).
+
+    ref : pd.DataFrame, optional, default = None
+        Reference parameter set to compare with.
+        Will use self.data['fits']['dfRef'] in default case (and attempt to set this if missing).
+
+    phaseCorr : bool, optional, default = True
+        Run phase correction routine for reference parameters.
+
+    phaseCorrParams : dict, optional, default = {}
+        Pass dictionary to additionally set parameters for phaseCorrection() method.
+        Default cases runs with {'dataDict':'dfRef', 'dataOut':'dfRefPC', 'useRef':False}, these parameters will update the defaults.
+        Note - these params are only used if phaseCorr = True.
+
+
     TODO:
 
     - Better dim handling.
-    - Generalize to compare any pair of parameter sets.
+    - Generalize to compare any pair of parameter sets. (Just need to loop over param sets and check attrs labels.)
 
     """
 
@@ -342,14 +362,29 @@ def paramsCompare(self, params = None, ref = None):
     else:
         dfRef = ref
 
+    if phaseCorr:
+        # Set defaults & update with any passed args
+        phaseCorrArgs = {'dataDict':'dfRef', 'dataOut':'dfRefPC', 'useRef':False}
+        phaseCorrArgs.update(phaseCorrParams)
 
-    # UGLY reshape - should be in existing routines already somewhere...? NOTE ISSUE WITH PIVOT > MULTIINDEX COLS not required here.
-    # dfRefRestack = dfRef.reset_index().set_index(['Param']).drop(['Fit','pn','stderr', 'vary', 'expr'], axis=1).pivot(columns = 'Type')
-    dfRefRestack = dfRef.reset_index().set_index(['Param'])[['Type','value']].pivot(columns = 'Type')  # Cleaner to just keep specified cols
-    dfRefRestack = dfRefRestack.droplevel(None, axis=1)  # Drop extra level, defaults to None
-    addColLevel(dfRefRestack)
-    dfRefRestack.columns = dfRefRestack.columns.reorder_levels(['Type','Dataset'])
-    # addColLevel(dfRefRestack, newCol = 'input',  names = ['Dataset','Type','Agg'])
+        # Run phaseCorrection()
+        self.phaseCorrection(**phaseCorrArgs)
+        dfRef = self.data['fits']['dfRefPC']
+
+    # For wide-form data as returned by phaseCorrection()
+    if dfRef.attrs['dType'].endswith('Wide'):
+        dfRefRestack = dfRef.T  #.reset_index()  #.pivot(columns = 'Type')  #.reset_index()
+        dfRefRestack.columns = dfRefRestack.columns.reorder_levels(['Type','Fit'])
+
+    # For long-form data as set in original params table.
+    else:
+        # UGLY reshape - should be in existing routines already somewhere...? NOTE ISSUE WITH PIVOT > MULTIINDEX COLS not required here.
+        # dfRefRestack = dfRef.reset_index().set_index(['Param']).drop(['Fit','pn','stderr', 'vary', 'expr'], axis=1).pivot(columns = 'Type')
+        dfRefRestack = dfRef.reset_index().set_index(['Param'])[['Type','value']].pivot(columns = 'Type')  # Cleaner to just keep specified cols
+        dfRefRestack = dfRefRestack.droplevel(None, axis=1)  # Drop extra level, defaults to None
+        addColLevel(dfRefRestack)
+        dfRefRestack.columns = dfRefRestack.columns.reorder_levels(['Type','Dataset'])
+        # addColLevel(dfRefRestack, newCol = 'input',  names = ['Dataset','Type','Agg'])
 
     dataFit = params['agg'].unstack().copy()  #.xs('mean', level='Agg')  #.unstack()  # Without xs to keep other Agg values.
     # addColLevel(dataFit, newCol = 'Fit')
@@ -359,13 +394,13 @@ def paramsCompare(self, params = None, ref = None):
     # Set differences - no trivial way to do this?
     for item in dataMerge.columns.get_level_values('Type').unique():
         try:
-            dataMerge[item,'diff'] = dataMerge[item]['mean'] - dataMerge[item]['Ref']   #.diff(-1)  #['m']
+            dataMerge[item,'diff'] = dataMerge[item]['mean'] - dataMerge[item]['ref']   #.diff(-1)  #['m']
         except:
             pass   # Crude error-handling for missing dims
 
 
     # Final sorting and reformat
-    dfOut = dataMerge.T.sort_index(level = 'Type').reindex(['mean','Ref','diff','std'], level = 'Agg')
+    dfOut = dataMerge.T.sort_index(level = 'Type').reindex(['mean','ref','diff','std'], level = 'Agg')
     dfOut.index.set_names(['Type','Source'], inplace = True)
 
     # Set outputs
@@ -528,7 +563,7 @@ def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide',
     dfOut = dfOut.reset_index().set_index(refDims)  # Match to original df
     dfOut = pd.concat([dfOut, dataInWide]).sort_index()  # NOTE - this seems to mess up with Multiindex IF dim ordering is different. UGH. HORRIBLE.
                                             # Update: Dim ordering should now be enforced in self._setWide() for dataInWide.
-    # dfOut.attrs['dType'] = 'Params Wide'
+    dfOut.attrs['dType'] = 'Params Wide'
 
     if self.__notebook__:
         display(dfOut)

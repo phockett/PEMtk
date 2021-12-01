@@ -48,7 +48,7 @@ def _setDefaultFits(self, dataRange):
 
 # NOTE - this will only work to add a single extra level, and then will nest.
 # More general solutions: https://stackoverflow.com/questions/14744068/prepend-a-level-to-a-pandas-multiindex
-def addColLevel(df, newCol = 'Ref', names = ['Dataset','Type']):
+def addColLevel(df, newCol = 'ref', names = ['Dataset','Type']):
     """Add top-level column to Pandas dataframe (crude)"""
 
     oldCols = df.columns.to_list()
