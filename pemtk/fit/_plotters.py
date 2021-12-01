@@ -81,6 +81,7 @@ def BLMsetPlot(self, key = 'fits', dataDict = 'AFxr', agg = True, ref = True,
 
     agg : bool, default = True
         If True, define reduced data as hv.reduce(['Fit'], np.mean, spreadfn=np.std)
+        NOTE: if False, rendering can be quite slow for large datasets.
         TODO: more options here.
 
     ref : bool, default = True
@@ -89,12 +90,18 @@ def BLMsetPlot(self, key = 'fits', dataDict = 'AFxr', agg = True, ref = True,
 
     """
 
-    # Reduce data using matEleSelector functionality
+    # TODO: add dim handling + global selectors options (e.g. 'redchiGroup')
+    # Set xDims to sensible defaults if possible (ensures consistent selection behaviour)
+    # if xDim is None:
+    #     if 't' in
+
+    # Reduce data & subselect Xarray using matEleSelector functionality
     dataRed = matEleSelector(self.data[key][dataDict], thres = thres, inds = sel, dims = xDim, sq = sq, drop=drop)
 
     # May be required depending on dataType and package versions.
     if unstack:
         dataRed = dataRed.unstack()
+
 
     # Set plot data type
     daPlot = plotTypeSelector(dataRed, pType = pType, axisUW = xDim)
@@ -122,7 +129,7 @@ def BLMsetPlot(self, key = 'fits', dataDict = 'AFxr', agg = True, ref = True,
             dataRef = dataRef.unstack()
 
         dataRef = plotTypeSelector(dataRef, pType = pType, axisUW = xDim)
-        refDS = self.hv.Dataset(dataRef.rename('BLM-inputs'))   # TODO: pull name from dataset?
+        refDS = self.hv.Dataset(dataRef.rename('BLM-ref'))   # TODO: pull name from dataset?
 
         # Add to plot object
         refPlot = refDS.to(self.hv.Curve, kdims = xDim).opts(line_dash='dashed') * refDS.to(self.hv.Scatter, kdims = xDim).opts(marker='cross', size=15)
@@ -132,7 +139,7 @@ def BLMsetPlot(self, key = 'fits', dataDict = 'AFxr', agg = True, ref = True,
         #     hvPlot = (hvPlot * refPlot).overlay(overlay)
         # else:
         #     hvPlot = hvPlot * refPlot.overlay(overlay)
-        hvPlot = hvPlot * refPlot.overlay(overlay)
+        hvPlot = hvPlot * refPlot.overlay(overlay)  # Now fixed, but may be slow for multiple Fit case - overlay ordering may matter here?
 
     # if overlay:
     #     hvPlot = hvPlot.overlay(overlay)  # This fails on Fits if refDS is set, since it's an unmatched dim. But OK if set independently for both datasets, and overlay([]) just passes.
@@ -142,8 +149,10 @@ def BLMsetPlot(self, key = 'fits', dataDict = 'AFxr', agg = True, ref = True,
         self.data[plotDict] = {}
 
     self.data[plotDict]['BLMsetData'] = hvDS
-    self.data[plotDict]['BLMsetRef'] = refDS
     self.data[plotDict]['BLMsetPlot'] = hvPlot
+
+    if ref:
+        self.data[plotDict]['BLMsetRef'] = refDS
 
     # Code from showPlot()
     if self.__notebook__:
