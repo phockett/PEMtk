@@ -391,17 +391,43 @@ def paramsCompare(self, params = None, ref = None, phaseCorr = True,
 
     dataMerge = dataFit.merge(dfRefRestack, on = 'Param')
 
-    # Set differences - no trivial way to do this?
+    # Add level for values vs. %
+    # See also ._util.addColLevel()
+    newLevel = 'dType'
+    baseName = 'num'
+    pcName = '%'
+    dataMerge[newLevel] = baseName
+    dataMerge.set_index(newLevel, append=True, inplace=True)
+    dataMerge = dataMerge.T
+
+    # # Set differences - no trivial way to do this?
+    # for item in dataMerge.columns.get_level_values('Type').unique():
+    #     try:
+    #         dataMerge[item,'diff'] = dataMerge[item]['mean'] - dataMerge[item]['ref']   #.diff(-1)  #['m']
+    #     except:
+    #         pass   # Crude error-handling for missing dims
+
+    # Update with additional values
     for item in dataMerge.columns.get_level_values('Type').unique():
         try:
-            dataMerge[item,'diff'] = dataMerge[item]['mean'] - dataMerge[item]['ref']   #.diff(-1)  #['m']
+            dataMerge[item,'diff',baseName] = dataMerge[item]['mean'] - dataMerge[item]['ref']   #.diff(-1)  #['m']
+            dataMerge[item,'diff/std', pcName] = np.abs(dataMerge[item,'diff']/dataMerge[item]['std'] *100)
+            # dataMerge[item,'diff/std %']['Cat'] = ['%']
+
+            for subitem in ['std','diff']:
+                dataMerge[item, f'{subitem}', pcName] = np.abs(dataMerge[item][subitem]/dataMerge[item]['mean'] * 100)   #.diff(-1)  #['m']
+
         except:
             pass   # Crude error-handling for missing dims
 
+    # dfT = dataMerge.T.sort_index(level = 'Type')  #.reindex(['mean','ref','diff','std'], level = 'Agg')  # NOTE reindex requires all levels here.
+    # dfT
+
 
     # Final sorting and reformat
-    dfOut = dataMerge.T.sort_index(level = 'Type').reindex(['mean','ref','diff','std'], level = 'Agg')
-    dfOut.index.set_names(['Type','Source'], inplace = True)
+    dfOut = dataMerge.T.sort_index(level = 'Type').reindex(['mean','ref','diff','std','diff/std'], level = 'Agg')
+    # dfOut = dataMerge.T.sort_index(level = 'Type').reindex(['mean','ref','diff','std'], level = 'Agg')
+    dfOut.index.set_names(['Type','Source',newLevel], inplace = True)
 
     # Set outputs
     self.paramsSummaryComp = dfOut
