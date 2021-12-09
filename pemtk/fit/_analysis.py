@@ -389,16 +389,20 @@ def paramsCompare(self, params = None, ref = None, phaseCorr = True,
     dataFit = params['agg'].unstack().copy()  #.xs('mean', level='Agg')  #.unstack()  # Without xs to keep other Agg values.
     # addColLevel(dataFit, newCol = 'Fit')
 
-    dataMerge = dataFit.merge(dfRefRestack, on = 'Param')
+    # **** Sort & append.
+    # TODO: tidy this up, lots of .T since this was all developed quasi-independently with slightly different data formats.
+    dataMerge = dataFit.merge(dfRefRestack, on = 'Param').T
 
+    # print(dataMerge)
     # Add level for values vs. %
     # See also ._util.addColLevel()
     newLevel = 'dType'
-    baseName = 'num'
+    baseName = 'num'  # TODO: set data type here based on inputs? Real/imag/abs/float?
     pcName = '%'
     dataMerge[newLevel] = baseName
     dataMerge.set_index(newLevel, append=True, inplace=True)
     dataMerge = dataMerge.T
+    # print(dataMerge)
 
     # # Set differences - no trivial way to do this?
     # for item in dataMerge.columns.get_level_values('Type').unique():
@@ -425,8 +429,10 @@ def paramsCompare(self, params = None, ref = None, phaseCorr = True,
 
 
     # Final sorting and reformat
+    # print(dataMerge)
     dfOut = dataMerge.T.sort_index(level = 'Type').reindex(['mean','ref','diff','std','diff/std'], level = 'Agg')
     # dfOut = dataMerge.T.sort_index(level = 'Type').reindex(['mean','ref','diff','std'], level = 'Agg')
+    # print(dfOut)
     dfOut.index.set_names(['Type','Source',newLevel], inplace = True)
 
     # Set outputs
