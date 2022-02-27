@@ -10,8 +10,11 @@ Class for determining and handling symmetrized harmonics.
 
 import libmsym as msym
 
+import pyshtools as pysh
+
 import numpy as np
 import pandas as pd
+
 import argparse, random, sys
 
 class symHarm():
@@ -131,3 +134,141 @@ class symHarm():
 
         self.coeffDF = df.unstack(level='l').fillna('')  # Set cols by l
 #         .columns.names
+
+
+
+    def setCoeffsSH(self, absM = True):
+        """
+        Convert symmertrized harmonics to SHtools object, and convert type to complex.
+
+        Parameters
+        ----------
+
+        absM : bool, optional, default = True
+            Use absM values from input coeff labels?
+            May need to force abs(M) for libmsym results? Or double up +/-M terms?
+
+        """
+
+        # Set data in
+        df = self.coeffDF.stack(level='l').swaplevel(i='l',j='m')  # TODO: better dim handling here/below?
+                                                                # NOTE: swaplevel to force (l,m) order.
+#         npTab = np.asarray(self.coeffTable)
+
+#         absM = True  # May need to force abs(M) for libmsym results? Or double up +/-M terms?
+
+        # Get symmetries from Dataframe
+        symList = df.index.unique(level='Character')
+
+        # lmax from Dataframe
+        lmax = np.asarray(df.index.unique(level='l')).astype(int).max()
+
+        tabOut = []
+        clmSets = {}
+
+        clmInd = 1
+
+        # For each symmetry, get coeffs, push to SHTOOLS format & convert
+        for sym in symList:
+
+#             print(sym)
+
+            # Unified version - need to replace empty strings too!
+            npTab = df.loc[sym].droplevel(['SALC (X)', 'PFIX (h)']).reset_index().replace('','NaN').to_numpy().astype('float')
+            npTab = npTab[~np.isnan(npTab[:,-1])]  # Drop NaNs
+#             print(npTab)
+
+            # clm.set_coeffs(npTab)   # NEEDS (values, ls, ms)
+            clm = pysh.SHCoeffs.from_zeros(lmax = npTab[:,0].max().astype(int))
+
+            # Store all clms sets (per sym)
+#             clmSets[clmInd] = {'sym':sym, 're':clm}
+            clmSets[sym] = {'re':clm}
+
+            if absM:
+                clm.set_coeffs(npTab[:,2], npTab[:,0].astype(int), np.abs(npTab[:,1].astype(int)))  # OK
+            else:
+                clm.set_coeffs(npTab[:,2], npTab[:,0].astype(int), npTab[:,1].astype(int))  # OK
+
+        #     clm.coeffs
+            clmC = clm.convert(csphase=-1, kind='complex')
+#             clmSets[clmInd].update('im':clmC)
+#             clmInd += 1
+            clmSets[sym].update({'im':clmC})
+
+            # Tabulate clm entries
+            for n in df.loc[sym].index:
+            #     print(dfC.loc['A1'].loc[n])
+
+                #*** Single symmetry to numpy array (l,m,coeff)
+#                 npTab = df.loc[sym].droplevel(['SALC (X)', 'PFIX (h)']).reset_index().to_numpy()
+                #.unstack().to_numpy()
+#                 npTab=npTab.astype('float')  # Need to fix type?
+            #     npTab
+                # Unified version - need to replace empty strings too! NOW SET ABOVE
+
+
+#                 # clm.set_coeffs(npTab)   # NEEDS (values, ls, ms)
+#                 clm = pysh.SHCoeffs.from_zeros(lmax = npTab[:,0].max().astype(int))
+
+#                 if absM:
+#                     clm.set_coeffs(npTab[:,2], npTab[:,0].astype(int), np.abs(npTab[:,1].astype(int)))  # OK
+#                 else:
+#                     clm.set_coeffs(npTab[:,2], npTab[:,0].astype(int), npTab[:,1].astype(int))  # OK
+
+#             #     clm.coeffs
+#                 clmC = clm.convert(csphase=-1, kind='complex')
+
+
+                # Set to output table with updated (l,m) set
+                s,h,l,m = n  # Unpack ref values
+
+            #     ind = dfC.loc['A1'].loc[n]
+
+                # Get updated ref value
+        #         print(df.loc[n])
+        #         print(clm.coeffs[:,int(l),np.abs(int(m))])  # Check inputs
+        #         print(clmC.coeffs[:,int(l),np.abs(int(m))]) # Check conversions
+
+                l = int(l)
+                if absM:
+                    mSign = np.sign(int(m))
+                    m = np.abs(int(m))
+
+                else:
+                    mSign =1
+                    m = int(m)
+
+
+        #         m = int(m)
+
+        #         tabOut.append([sym, s, h, l, m, clmC.coeffs[:,l,m]])  # This will add 2 values per (l,m)
+
+                # Format +/-m pairs
+#                 try:
+                if m != 0:
+                    tabOut.append([sym, s, h, l, m, clmC.coeffs[0,l,m]])
+                    tabOut.append([sym, s, h, l, -m, mSign*clmC.coeffs[1,l,m]])  # Apply phase fix?
+                else:
+                    tabOut.append([sym, s, h, l, m, clmC.coeffs[0,l,m]])
+
+                # Skip index errors, can get this is given (l,m) is null/removed for sym group.
+                # TODO: should be fixable from PD DataFrame? Due to shared index over all sym groups?
+#                 except IndexError:
+#                     pass
+
+        # Set new output tables
+        tabOutNP = np.asarray(tabOut)  # Numpy OK, but seems to convert types?
+                                       # Homogeneous type? Would be OK for values only?
+
+
+        mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character', 'SALC (X)', 'PFIX (h)', 'l', 'm'])
+        dfC = pd.DataFrame(tabOutNP[:,-1], index = mInd, columns=['clmC'])
+
+
+        # Store outputs
+        self.coeffTableC = tabOut    # Use raw results here?
+        self.coeffDFC = dfC
+#         self.clm = {'re':clm, 'im':clmC, 'note':'SHtools clm coefficient objects, re (real) and im (complex) harmonic expansions.'}
+        self.clm = clmSets
+        self.clm.update({'note':'SHtools clm coefficient objects, re (real) and im (complex) harmonic expansions.'})
