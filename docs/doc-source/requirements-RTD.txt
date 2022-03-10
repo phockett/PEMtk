@@ -34,6 +34,7 @@ nbsphinx>=0.4
 
 # For nbsphinx formatting in Read the Docs, include ipython here, see https://github.com/spatialaudio/nbsphinx/issues/24
 ipython
+ipython_genutils   # Added 10/03/22, builds currently failing due to this, possibly, although should be pulled automatically (as per working builds 27/02/22)
 
 # Added 10/09/20, new jupyter_pygments code in RTD build which throws version error with pygments 2.3.1, which seems to be default. See https://readthedocs.org/api/v2/build/11853448.txt
 pygments >= 2.4.1

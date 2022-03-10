@@ -73,6 +73,8 @@ if on_rtd:
                             "pyvista","holoviews",
                             "natsort", "lmfit", "epsproc",
                             "libmsym","pyshtools", "argparse", "random", "sys"]   # For symHarm class - system imports causing issues?
+                                                                                # 10/03/22 getting "Extension error: Could not import extension nbsphinx (exception: No module named 'ipython_genutils')" after adding symHarm class.
+                                                                                # Seems to be triggered by nbconvert import, currently pulling nbconvert-6.4.2
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
