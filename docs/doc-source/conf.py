@@ -72,7 +72,7 @@ if on_rtd:
                             "matplotlib","mpl_toolkits","seaborn","plotly",
                             "pyvista","holoviews",
                             "natsort", "lmfit", "epsproc",
-                            "libmsym","pyshtools"]
+                            "libmsym","pyshtools", "argparse", "random", "sys"]   # For symHarm class - system imports causing issues?
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
