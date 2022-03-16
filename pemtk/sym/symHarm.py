@@ -93,7 +93,10 @@ class symHarm():
         # Compute harmonic coeffs
         self.set_lm_basis()
         self.calcSymHarmonics()
+
+        # Conversions (with defaults)
         self.setCoeffsSH()
+        self.setCoeffsXR()
 
 
     #*********************** CALCULATION FUNCTIONS
@@ -210,7 +213,7 @@ class symHarm():
 
 
     def setCoeffsSH(self, absM = True):
-        """
+        r"""
         Convert symmertrized harmonics to SHtools object, and convert type to complex.
 
         Parameters
