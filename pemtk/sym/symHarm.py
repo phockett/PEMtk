@@ -165,7 +165,7 @@ class symHarm():
 
 
         mInd = pd.MultiIndex.from_arrays(charTabNP[:,0:2].T, names=['Character','dim'])
-        df = pd.DataFrame(charTabNP[:,2:], index = mInd, columns=symObj.ctx.character_table.symmetry_operations[0]._names)
+        df = pd.DataFrame(charTabNP[:,2:], index = mInd, columns=self.ctx.character_table.symmetry_operations[0]._names)
 
         self.charTablePD = df
 
