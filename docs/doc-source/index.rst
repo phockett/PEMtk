@@ -16,6 +16,13 @@ Welcome to PEMtk - the Photoelectron Metrology Toolkit
 
 .. toctree::
    :maxdepth: 2
+   :caption: Symmetrized harmonics:
+   
+   sym/pemtk_symHarm_demo_160322_tidy
+
+
+.. toctree::
+   :maxdepth: 2
    :caption: Fitting/extracting matrix elements:
 
    fitting/PEMtk_fitting_basic_demo_030621-full
