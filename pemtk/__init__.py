@@ -5,6 +5,7 @@ __version__ = '0.0.1'
 import sys
 
 # Import epsproc if installed, otherwise try local copy
+# Note - this is currently required for fitting class, but not symHarm functionality.
 try:
     import epsproc as ep
 

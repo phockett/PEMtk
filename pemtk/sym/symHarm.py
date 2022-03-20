@@ -6,6 +6,11 @@ Class for determining and handling symmetrized harmonics.
 - For early dev work see http://localhost:8888/lab/workspaces/symm/tree/python/chem/tools/symmetrized_harmonics_libmsym_tests_160122.ipynb
 - For class dev see http://localhost:8888/lab/workspaces/symm/tree/python/chem/tools/symmetrized_harmonics_PEMtk-dev_240222.ipynb
 
+TODO
+
+- Data to dicts?  Currently have multiple self.coeffXX attribs.
+- Interface/convert to matrix elements for ePSproc use.
+
 """
 
 import libmsym as msym
@@ -176,6 +181,8 @@ class symHarm():
 
         tabOutNP = np.asarray(self.coeffTable)  # Numpy OK, but seems to convert types?
                                # Homogeneous type? Would be OK for values only?
+                               # Should be able to set, e.g. table = np.asarray(symObj.coeffTableC) #, dtype='str, int, int, int, int, float')
+                               # But currently fails, probably row/col ordering issue? See https://numpy.org/doc/stable/reference/arrays.dtypes.html
 #         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character', 'SALC (X)', 'PFIX (h)', 'l', 'm'])
 
         #********************************** 02/03/22 - updated labels, may break things later!
@@ -193,7 +200,7 @@ class symHarm():
 
         defaultInd = ['C', 'h', 'mu', 'l', 'm']
         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=defaultInd)
-        df = pd.DataFrame(tabOutNP[:,-1], index = mInd, columns=['b (real)'])
+        df = pd.DataFrame(tabOutNP[:,-1].astype(np.float), index = mInd, columns=['b (real)'])
         # mInd
         df.attrs['indexes']= {'shortnames': defaultInd,
                             'longnames': {'C':'Character ($\Gamma$)', 'h':'SALC (h)', 'mu':'PFIX ($\mu$)'},  #, 'l':'l', 'm':'m'},
@@ -367,7 +374,7 @@ class symHarm():
 #         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character', 'SALC (X)', 'PFIX (h)', 'l', 'm'])
 #         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character ($\Gamma$)', 'SALC (h)', 'PFIX ($\mu$)', 'l', 'm'])
         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=self.coeffDF.attrs['indexes']['shortnames'])
-        dfC = pd.DataFrame(tabOutNP[:,-1], index = mInd, columns=['b (complex)'])
+        dfC = pd.DataFrame(tabOutNP[:,-1].astype(complex), index = mInd, columns=['b (complex)'])
 
 
         # Store outputs
@@ -388,6 +395,15 @@ class symHarm():
             coeffsXR.update(xr.Dataset.from_dataframe(self.coeffDFC))
 
             self.coeffsXR = coeffsXR
+
+            # May need to fix coord types from str to ints
+            # TODO: better solution here? Should fix in Pandas tables?
+            for k in self.coeffsXR.coords.keys():
+                try:
+                    self.coeffsXR.coords[k].data = self.coeffsXR.coords[k].data.astype(int)
+                except ValueError:
+                    pass
+
 
         else:
             print("Xarray required to run self.setCoeffsXR.")
