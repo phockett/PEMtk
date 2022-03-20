@@ -85,12 +85,27 @@ class symHarm():
     """
 
 
-    def __init__(self, PG = 'Cs', lmax = 4):
-        """Init class object"""
+    def __init__(self, PG = 'Cs', lmax = 4, dims = ['C', 'h', 'mu', 'l', 'm']):
+        """
+        Init class object.
+
+        Paramters
+        ---------
+        PG : string, default = 'Cs'
+            Point-group.
+
+        lmax : int, default = 4
+            Maximum l to use.
+
+        dims : list, default = ['C', 'h', 'mu', 'l', 'm']
+            Dimension labels to use for outputs.
+
+        """
 
         # Set params
         self.PG = PG
         self.lmax = lmax
+        self.dims = dims # Dims names from defaults, or as passed.
 
         # Set single element as expansion centre
         self.elements = [msym.Element(name = "C", coordinates = [0.0, 0.0,0.0])]
@@ -198,7 +213,8 @@ class symHarm():
 
         #         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character ($\Gamma$)', 'SALC (h)', 'PFIX ($\mu$)', 'l', 'm'])
 
-        defaultInd = ['C', 'h', 'mu', 'l', 'm']
+        # defaultInd = ['C', 'h', 'mu', 'l', 'm']
+        defaultInd = self.dims
         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=defaultInd)
         df = pd.DataFrame(tabOutNP[:,-1].astype(np.float), index = mInd, columns=['b (real)'])
         # mInd
@@ -387,8 +403,19 @@ class symHarm():
         self.clm.update({'note':'SHtools clm coefficient objects, real and comp (complex) harmonic expansions.'})
 
 
-    def setCoeffsXR(self):
-        """Convert coeffs from PD DataFrame to Xarray Dataset"""
+    def setCoeffsXR(self, stack = True):
+        """
+        Convert coeffs from PD DataFrame to Xarray Dataset.
+
+        Parameters
+        ----------
+
+        stack : dict, bool, optional, default = True
+            If True, try and use default stacking, {'inds':self.dims[1:3], 'LM':self.dims[3:]}.
+            If False, don't stack.
+            If dict, try and stack with specified dict mapping.
+
+        """
 
         if xrFlag:
             coeffsXR = xr.Dataset.from_dataframe(self.coeffDF)
@@ -404,6 +431,11 @@ class symHarm():
                 except ValueError:
                     pass
 
+            if stack:
+                if isinstance(stack,dict):
+                    self.coeffsXR = self.coeffsXR.stack(stack)
+                else:
+                    self.coeffsXR = self.coeffsXR.stack({'inds':self.dims[1:3], 'LM':self.dims[3:]})
 
         else:
             print("Xarray required to run self.setCoeffsXR.")
