@@ -98,6 +98,7 @@ class pemtkFit(dataClass):
         # self.subset = {}  # Set dict to hold data subset for fitting
         self.subKey = 'subset'  # Set subKey to use existing .data structure for compatibility with existing functions!
         # self.resultsKey = 'results'  # Set resultsKey to use existing .data structure for compatibility with existing functions!
+        self.data[self.subKey] = {}  # Set empty to ensure setMatEFit will always run, even on blank init.
 
         # Init fit params to None
         # Currently set to push current fit to base structure, and keep all fits in .data[N] dicts.
