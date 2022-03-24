@@ -1,6 +1,10 @@
 """
 Class for determining and handling symmetrized harmonics.
 
+23/03/22    v2
+
+- Switched to nested dicts for coeffs, now all in self.coeffs[dtype].
+
 24/02/22    v1 in development.
 
 - For early dev work see http://localhost:8888/lab/workspaces/symm/tree/python/chem/tools/symmetrized_harmonics_libmsym_tests_160122.ipynb
@@ -28,6 +32,8 @@ try:
 except:
     print("***Xarray not found, XR outputs not available.")
     xrFlag = False
+
+from ._util import prefixAxisTitles, listPGs
 
 
 class symHarm():
@@ -62,7 +68,12 @@ class symHarm():
     ------
 
     - Point-groups, character table generation and symmetrization (computing $b_{hl\lambda}^{\Gamma\mu}$ parameters) is handled by [libmsym](https://github.com/mcodev31/libmsym) (based on https://github.com/mcodev31/libmsym/issues/21).
+        - Supported point groups: Ci, Cs, Cnv, Dn, Dnh, Dnd, Td, O, Oh, I and Ih
+        - Routines have been tested with libmsym v0.2.2, March 2022 (last commit https://github.com/mcodev31/libmsym/commit/c99470376270db4ec4c925b952fa722e011377d6).
+
     - Spherical harmonic expansions and conversions (real, imaginary, normalization etc.) and basic ploting (2D maps) are handled by [pySHtools](https://shtools.oca.eu).
+        - Routines have been tested with v4.5 and 4.9 (current March 2022).
+        
     - TODO: Interface to PEMtk/ePSproc for other plotters and handling routines.
 
 
@@ -106,6 +117,11 @@ class symHarm():
         self.PG = PG
         self.lmax = lmax
         self.dims = dims # Dims names from defaults, or as passed.
+
+        self.PGlist = listPGs()  # Set via function to allow for access from other classes etc.
+
+        # Set data structure
+        self.coeffs = {}
 
         # Set single element as expansion centre
         self.elements = [msym.Element(name = "C", coordinates = [0.0, 0.0,0.0])]
@@ -161,7 +177,8 @@ class symHarm():
 
         # Log outputs - may want to use dicts?
         self.ctx = ctx
-        self.coeffTable = tabOut
+        # self.coeffTable = tabOut
+        self.coeffs['libmsym'] = {'real':tabOut}
 
         # Set PD table form too
         self.setCoeffsPD()
@@ -194,7 +211,7 @@ class symHarm():
     def setCoeffsPD(self):
         """Convert raw list output to Pandas DataFrame,"""
 
-        tabOutNP = np.asarray(self.coeffTable)  # Numpy OK, but seems to convert types?
+        tabOutNP = np.asarray(self.coeffs['libmsym']['real'])  # Numpy OK, but seems to convert types?
                                # Homogeneous type? Would be OK for values only?
                                # Should be able to set, e.g. table = np.asarray(symObj.coeffTableC) #, dtype='str, int, int, int, int, float')
                                # But currently fails, probably row/col ordering issue? See https://numpy.org/doc/stable/reference/arrays.dtypes.html
@@ -230,9 +247,11 @@ class symHarm():
 #         df.name = f"Symmetrize harmonic coeffs {self.PG}"  # Not working?
 
 #         self.coeffDF = df.unstack(level='l').fillna('')  # Set cols by l   - DO THIS ONLY FOR DISPLAY LATER? OR ADD A SWITCH/OPTION?
-        self.coeffDF = df  #.unstack(level='l').fillna('')
+        # self.coeffDF = df  #.unstack(level='l').fillna('')
+        self.coeffs['DF'] = {'real':df}
 #         .columns.names
-        self.coeffDF.attrs = df.attrs   # Propagate attribs
+        # self.coeffDF.attrs = df.attrs   # Propagate attribs
+        self.coeffs['DF']['real'].attrs = df.attrs   # Propagate attribs
 
 
     def setCoeffsSH(self, absM = True):
@@ -273,7 +292,7 @@ class symHarm():
         """
 
         # Set data in
-        df = self.coeffDF   # Stacked case
+        df = self.coeffs['DF']['real']   # Stacked case
 #         df = self.coeffDF.stack(level='l').swaplevel(i='l',j='m')  # TODO: better dim handling here/below?
                                                                 # NOTE: swaplevel to force (l,m) order.
 #         npTab = np.asarray(self.coeffTable)
@@ -389,18 +408,21 @@ class symHarm():
 
 #         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character', 'SALC (X)', 'PFIX (h)', 'l', 'm'])
 #         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character ($\Gamma$)', 'SALC (h)', 'PFIX ($\mu$)', 'l', 'm'])
-        mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=self.coeffDF.attrs['indexes']['shortnames'])
+        mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=self.coeffs['DF']['real'].attrs['indexes']['shortnames'])
         dfC = pd.DataFrame(tabOutNP[:,-1].astype(complex), index = mInd, columns=['b (complex)'])
 
 
         # Store outputs
-        self.coeffTableC = tabOut    # Use raw results here?
-        self.coeffDFC = dfC
-        self.coeffDFC.attrs = self.coeffDF.attrs  # Use inital attribs
-        self.coeffDFC.attrs['type'] = 'comp'
+        # self.coeffTableC = tabOut    # Use raw results here?
+        self.coeffs['libmsym']['comp'] = tabOut
+        self.coeffs['DF']['comp'] = dfC
+        self.coeffs['DF']['comp'].attrs = self.coeffs['DF']['real'].attrs  # Use inital attribs
+        self.coeffs['DF']['comp'].attrs['type'] = 'comp'
 #         self.clm = {'re':clm, 'im':clmC, 'note':'SHtools clm coefficient objects, re (real) and im (complex) harmonic expansions.'}
-        self.clm = clmSets
-        self.clm.update({'note':'SHtools clm coefficient objects, real and comp (complex) harmonic expansions.'})
+        # self.clm = clmSets
+        # self.clm.update({'note':'SHtools clm coefficient objects, real and comp (complex) harmonic expansions.'})
+        self.coeffs['SH'] = clmSets
+        self.coeffs['SH'].update({'note':'SHtools clm coefficient objects, real and comp (complex) harmonic expansions.'})
 
 
     def setCoeffsXR(self, stack = True):
@@ -418,24 +440,24 @@ class symHarm():
         """
 
         if xrFlag:
-            coeffsXR = xr.Dataset.from_dataframe(self.coeffDF)
-            coeffsXR.update(xr.Dataset.from_dataframe(self.coeffDFC))
+            coeffsXR = xr.Dataset.from_dataframe(self.coeffs['DF']['real'])
+            coeffsXR.update(xr.Dataset.from_dataframe(self.coeffs['DF']['comp']))
 
-            self.coeffsXR = coeffsXR
+            self.coeffs['XR'] = coeffsXR
 
             # May need to fix coord types from str to ints
             # TODO: better solution here? Should fix in Pandas tables?
-            for k in self.coeffsXR.coords.keys():
+            for k in self.coeffs['XR'].coords.keys():
                 try:
-                    self.coeffsXR.coords[k].data = self.coeffsXR.coords[k].data.astype(int)
+                    self.coeffs['XR'].coords[k].data = self.coeffs['XR'].coords[k].data.astype(int)
                 except ValueError:
                     pass
 
             if stack:
                 if isinstance(stack,dict):
-                    self.coeffsXR = self.coeffsXR.stack(stack)
+                    self.coeffs['XR'] = self.coeffs['XR'].stack(stack)
                 else:
-                    self.coeffsXR = self.coeffsXR.stack({'inds':self.dims[1:3], 'LM':self.dims[3:]})
+                    self.coeffs['XR'] = self.coeffs['XR'].stack({'inds':self.dims[1:3], 'LM':self.dims[3:]})
 
         else:
             print("Xarray required to run self.setCoeffsXR.")
@@ -464,17 +486,17 @@ class symHarm():
     # Display table
     def displayXlm(self, names = 'longnames', YlmType = 'real', setCols = 'l'):
         """
-        Print table of values from Pandas Dataframe self.coeffDF, with specified labels (from self.coeffDF.attrs['indexes']).
+        Print table of values from Pandas Dataframe self.coeffs['DF']['real'], with specified labels (from self.coeffs['DF']['real'].attrs['indexes']).
 
         Parameters
         ----------
 
         names : str, optional, default = 'longnames'
-            Labels to use in printed table, from self.coeffDF.attrs['indexes']
+            Labels to use in printed table, from self.coeffs['DF']['real'].attrs['indexes']
 
         YlmType : str, optional, default = 'real'
-            - 'real' show real harmonic coeffs, from self.coeffDF
-            - 'comp' show complex harmonic coeffs, from self.coeffDFC
+            - 'real' show real harmonic coeffs, from self.coeffs['DF']['real']
+            - 'comp' show complex harmonic coeffs, from self.coeffs['DF']['comp']
 
         setCols : str, optional, default = 'l'
             Set which label to use for display.
@@ -493,11 +515,11 @@ class symHarm():
         # Current strucutre - may want to set to dicts?
         # Note hard-coded unstack too - should add as an option
         if YlmType is 'real':
-            inputData = self.coeffDF.copy().unstack(level=setCols).fillna('')
-            inputData.attrs = self.coeffDF.attrs
+            inputData = self.coeffs['DF']['real'].copy().unstack(level=setCols).fillna('')
+            inputData.attrs = self.coeffs['DF']['real'].attrs
         elif YlmType is 'comp':
-            inputData = self.coeffDFC.copy().astype(str).unstack(level=setCols).fillna('')  # Note cast to string to avoid `TypeError: No matching signature found` for complex data on unstack (might be PD version bug, tested in v1.0.1)
-            inputData.attrs = self.coeffDFC.attrs
+            inputData = self.coeffs['DF']['comp'].copy().astype(str).unstack(level=setCols).fillna('')  # Note cast to string to avoid `TypeError: No matching signature found` for complex data on unstack (might be PD version bug, tested in v1.0.1)
+            inputData.attrs = self.coeffs['DF']['comp'].attrs
         else:
             print(f"Didn't recognise Ylm type {YlmType}")
 
@@ -528,7 +550,7 @@ class symHarm():
         Parameters
         ----------
         pType : str, optional, default = 'real'
-            Plot type as key (for self.clm[pType]).
+            Plot type as key (for self.coeffs['SH'][pType]).
             Default cases are 'real' or 'comp' types (complex harmonics)
 
         gridlmax : int or None, optional, default = 20
@@ -536,8 +558,8 @@ class symHarm():
             Use SHtools defaults if set to None (== lmax of distribution)
 
        syms : str or list, default = None
-           Symmetry groups self.clm[pType][sym] to plot.
-           Defaults to all syms, as defined by self.clm[pType].keys()
+           Symmetry groups self.coeffs['SH'][pType][sym] to plot.
+           Defaults to all syms, as defined by self.coeffs['SH'][pType].keys()
 
 
         **kwargs : optional args passed to SHtools grid.plot(**kwargs)
@@ -553,7 +575,7 @@ class symHarm():
         """
         # Set syms
         if syms is None:
-            syms = self.clm.keys()
+            syms = self.coeffs['SH'].keys()
 
         if type(syms) is not list:
             syms = list(syms)
@@ -562,8 +584,20 @@ class symHarm():
         for key in syms:
             if key != 'note':
 #                 print(key)
-                grid = self.clm[key][pType].expand(lmax = gridlmax)
-                grid.plot(title=f'{self.PG} ({key}), l_max={self.lmax}', **kwargs)
+                grid = self.coeffs['SH'][key][pType].expand(lmax = gridlmax)
+
+                # 'title' fails for some versions of SHtools/MatPlotlib?
+                # BUT this code shows blank plot for try part, even on fail, and with show=False set.
+                # try:
+                #     grid.plot(title=f'{self.PG} ({key}), l_max={self.lmax}', show=False, **kwargs)
+                # except AttributeError:
+                #     grid.plot(**kwargs)
+
+                # More general fix, parse p and set titles (this is (fig, [axes]) object)
+                p = grid.plot(**kwargs)
+                # p[1].set_title('test');
+                prefixAxisTitles(p, prefix = f'{self.PG} ({key}), l_max={self.lmax}')  # Use separate function to parse p and set title(s)
+                                                                                        # This works also for re/im case, with nested plots.
 
 #                 fig, ax = grid.plot(show=False)
         #         fig.set_label(key)
