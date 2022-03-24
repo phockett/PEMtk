@@ -33,7 +33,7 @@ except:
     print("***Xarray not found, XR outputs not available.")
     xrFlag = False
 
-from ._util import prefixAxisTitles, listPGs
+from ._util import prefixAxisTitles, listPGs, toePSproc
 
 
 class symHarm():
@@ -73,7 +73,7 @@ class symHarm():
 
     - Spherical harmonic expansions and conversions (real, imaginary, normalization etc.) and basic ploting (2D maps) are handled by [pySHtools](https://shtools.oca.eu).
         - Routines have been tested with v4.5 and 4.9 (current March 2022).
-        
+
     - TODO: Interface to PEMtk/ePSproc for other plotters and handling routines.
 
 
@@ -187,6 +187,12 @@ class symHarm():
 
 
     #*********************** CONVERSION FUNCTIONS
+
+    def toePSproc(self, dimMap = {'C':'Cont','h':'it'}, dataType = 'BLM'):
+        """Wrap toePSproc method."""
+
+        self.coeffs[dataType] = toePSproc(self.coeffs, dimMap = dimMap, dataType = dataType)
+
 
     def setCharTablePD(self):
         """Generate character table & convert to Pandas DataFrame."""
@@ -444,6 +450,13 @@ class symHarm():
             coeffsXR.update(xr.Dataset.from_dataframe(self.coeffs['DF']['comp']))
 
             self.coeffs['XR'] = coeffsXR
+
+            # Set additional metadata for portability
+            # TODO: check ePSproc conventions here.
+            self.coeffs['XR'].attrs = {'dataType':'symHarm',
+                                        'name':'Symmetrized harmonics',
+                                        'PG': self.PG,
+                                        'lmax': self.lmax}
 
             # May need to fix coord types from str to ints
             # TODO: better solution here? Should fix in Pandas tables?
