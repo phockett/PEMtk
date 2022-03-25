@@ -195,6 +195,26 @@ class symHarm():
         self.coeffs[dataType] = toePSproc(self.coeffs, dimMap = dimMap, dataType = dataType, verbose = self.verbose)
 
 
+    def getSymOps(self):
+        """
+        Get symmetry operation labels from libmsym repr.
+
+        Quick hack to grab labels from self.ctx.character_table.symmetry_operations objects, should be a better way.
+
+        For source, see https://github.com/mcodev31/libmsym/blob/c99470376270db4ec4c925b952fa722e011377d6/bindings/python/libmsym/libmsym.py#L65
+
+        """
+
+        symOps = []
+
+        for item in self.ctx.character_table.symmetry_operations:
+
+    #         print(item)
+            symOps.append(item.__str__().split('(')[1].strip().split(',')[0].split(' ')[0])
+
+        self.symOps = symOps
+
+
     def setCharTablePD(self):
         """Generate character table & convert to Pandas DataFrame."""
 
@@ -207,9 +227,12 @@ class symHarm():
 
         charTabNP = np.asarray(charTab)
 
+        self.getSymOps()  # Set self.symOps for symmetry operation labels.
+
 
         mInd = pd.MultiIndex.from_arrays(charTabNP[:,0:2].T, names=['Character','dim'])
-        df = pd.DataFrame(charTabNP[:,2:], index = mInd, columns=self.ctx.character_table.symmetry_operations[0]._names)
+        # df = pd.DataFrame(charTabNP[:,2:], index = mInd, columns=self.ctx.character_table.symmetry_operations[0]._names)
+        df = pd.DataFrame(charTabNP[:,2:], index = mInd, columns=self.symOps)
 
         self.charTablePD = df
 
