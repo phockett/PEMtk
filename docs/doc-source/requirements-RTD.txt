@@ -32,6 +32,8 @@
 sphinxcontrib.apidoc==0.3.0
 nbsphinx>=0.4
 
+jinja2<3.1.0  # temporary fix for jina2/nbconvert bug, issue as of 24/03/22, https://github.com/jupyter/nbconvert/issues/1736
+
 # For nbsphinx formatting in Read the Docs, include ipython here, see https://github.com/spatialaudio/nbsphinx/issues/24
 ipython
 ipython_genutils   # Added 10/03/22, builds currently failing due to this, possibly, although should be pulled automatically (as per working builds 27/02/22)
