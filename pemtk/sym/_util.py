@@ -67,7 +67,7 @@ def listPGs():
 
 
 
-def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, dataType = 'BLM'):
+def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, dataType = 'BLM', verbose = 1):
     """
     Convert/conform Xarray of symmetrized harmonics to reference ePSproc data structures.
 
@@ -106,10 +106,14 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, dataType = 'BLM'):
 
     daTest = daTest.rename(dimMap)  # Remap existing dims
 
+    if verbose:
+        print(f'Remapped dims: {dimMap}')
+
     # Set refDims from ep dataTypes function
     refDims = dataTypesList()[dataType]['def']  #(sType='unstacked')
 
     # Add dims as required
+    # TODO: may want to use checkDims() here?
     for dim in refDims(sType='unstacked'):
         if not dim in daTest.dims:
 
@@ -128,6 +132,9 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, dataType = 'BLM'):
             else:
                 daTest = daTest.expand_dims({dim: [0]})
     #         daTest = daTest.expand_dims({dim: [0]})
+
+            if verbose:
+                print(f'Added dim {dim}')
 
     # Restack for output
     daTest = daTest.stack(refDims(sType='sDict'))

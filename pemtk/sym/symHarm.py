@@ -118,6 +118,7 @@ class symHarm():
         self.lmax = lmax
         self.dims = dims # Dims names from defaults, or as passed.
 
+        self.verbose = 1
         self.PGlist = listPGs()  # Set via function to allow for access from other classes etc.
 
         # Set data structure
@@ -188,10 +189,10 @@ class symHarm():
 
     #*********************** CONVERSION FUNCTIONS
 
-    def toePSproc(self, dimMap = {'C':'Cont','h':'it'}, dataType = 'BLM'):
+    def toePSproc(self, dimMap = {'C':'Cont','h':'it', 'mu':'muX'}, dataType = 'BLM'):
         """Wrap toePSproc method."""
 
-        self.coeffs[dataType] = toePSproc(self.coeffs, dimMap = dimMap, dataType = dataType)
+        self.coeffs[dataType] = toePSproc(self.coeffs, dimMap = dimMap, dataType = dataType, verbose = self.verbose)
 
 
     def setCharTablePD(self):
