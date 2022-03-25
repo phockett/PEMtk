@@ -17,8 +17,9 @@ Welcome to PEMtk - the Photoelectron Metrology Toolkit
 .. toctree::
    :maxdepth: 2
    :caption: Symmetrized harmonics:
-   
+
    sym/pemtk_symHarm_demo_160322_tidy
+   sym/pemtk_symHarm_epsproc-interface_demo_240322
 
 
 .. toctree::
