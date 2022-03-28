@@ -116,7 +116,9 @@ class symHarm():
         # Set params
         self.PG = PG
         self.lmax = lmax
+
         self.dims = dims # Dims names from defaults, or as passed.
+        self.dtypes = ['O',int,int,int,int]  # Set dtypes for dims
 
         self.verbose = 1
         self.PGlist = listPGs()  # Set via function to allow for access from other classes etc.
@@ -174,12 +176,21 @@ class symHarm():
                         if (abs(v) > 100*sys.float_info.epsilon):
         #                     print("\t\t{0}*{1} ".format(v,salc.basis_functions[ix].name));
                             l,m = salc.basis_functions[ix].name.split(',')
-                            tabOut.append([ctx.character_table.symmetry_species[ss.symmetry_species].name, salcix, pfix, int(l), int(m), v])
+
+                            # Set line in output - lists
+                            # tabOut.append([ctx.character_table.symmetry_species[ss.symmetry_species].name, salcix, pfix, int(l), int(m), v])
+                            # Tuple version for NP structured array creation.
+                            tabOut.append((ctx.character_table.symmetry_species[ss.symmetry_species].name, salcix, pfix, int(l), int(m), v))
 
         # Log outputs - may want to use dicts?
         self.ctx = ctx
         # self.coeffTable = tabOut
-        self.coeffs['libmsym'] = {'real':tabOut}
+        # self.coeffs['libmsym'] = {'real':tabOut}
+
+        # Convert to NP structured array (keeps heterogeneous dtypes)
+        dimTypes = list(zip(self.dims,self.dtypes))  # Dims
+        dimTypes.extend([('b',float)])   # Data
+        self.coeffs['libmsym'] = {'real':np.asarray(tabOut, dtype=dimTypes)}
 
         # Set PD table form too
         self.setCoeffsPD()
@@ -241,7 +252,9 @@ class symHarm():
     def setCoeffsPD(self):
         """Convert raw list output to Pandas DataFrame,"""
 
-        tabOutNP = np.asarray(self.coeffs['libmsym']['real'])  # Numpy OK, but seems to convert types?
+        tabOutNP = self.coeffs['libmsym']['real']   # For structured array version
+
+        # tabOutNP = np.asarray(self.coeffs['libmsym']['real'])  # Numpy OK, but seems to convert types?
                                # Homogeneous type? Would be OK for values only?
                                # Should be able to set, e.g. table = np.asarray(symObj.coeffTableC) #, dtype='str, int, int, int, int, float')
                                # But currently fails, probably row/col ordering issue? See https://numpy.org/doc/stable/reference/arrays.dtypes.html
@@ -262,8 +275,15 @@ class symHarm():
 
         # defaultInd = ['C', 'h', 'mu', 'l', 'm']
         defaultInd = self.dims
-        mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=defaultInd)
-        df = pd.DataFrame(tabOutNP[:,-1].astype(np.float), index = mInd, columns=['b (real)'])
+
+        # Basic case
+        # mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=defaultInd)
+        # df = pd.DataFrame(tabOutNP[:,-1].astype(np.float), index = mInd, columns=['b (real)'])
+
+        # For structured array version
+        mInd = pd.MultiIndex.from_tuples(tabOutNP[:][self.dims].tolist(), names=defaultInd)  # Set index from named dims
+        df = pd.DataFrame(tabOutNP[:][tabOutNP.dtype.names[-1]], index = mInd, columns=['b (real)'])  # Set data from final dim in array
+
         # mInd
         df.attrs['indexes']= {'shortnames': defaultInd,
                             'longnames': {'C':'Character ($\Gamma$)', 'h':'SALC (h)', 'mu':'PFIX ($\mu$)'},  #, 'l':'l', 'm':'m'},
@@ -329,8 +349,8 @@ class symHarm():
 
 #         absM = True  # May need to force abs(M) for libmsym results? Or double up +/-M terms?
 
-        # Get symmetries from Dataframe
-        symList = df.index.unique(level='C')
+        # Get symmetries from Dataframe - assume first dim for this.
+        symList = df.index.unique(level=self.dims[0])
 
         # lmax from Dataframe
         lmax = np.asarray(df.index.unique(level='l')).astype(int).max()
@@ -420,10 +440,12 @@ class symHarm():
                 # Format +/-m pairs
                 try:
                     if m != 0:
-                        tabOut.append([sym, s, h, l, m, clmC.coeffs[0,l,m]])
-                        tabOut.append([sym, s, h, l, -m, mSign*clmC.coeffs[1,l,m]])  # Apply phase fix?
+                        # tabOut.append([sym, s, h, l, m, clmC.coeffs[0,l,m]])
+                        # tabOut.append([sym, s, h, l, -m, mSign*clmC.coeffs[1,l,m]])  # Apply phase fix?
+                        tabOut.append((sym, s, h, l, m, clmC.coeffs[0,l,m]))
+                        tabOut.append((sym, s, h, l, -m, mSign*clmC.coeffs[1,l,m]))  # Apply phase fix?
                     else:
-                        tabOut.append([sym, s, h, l, m, clmC.coeffs[0,l,m]])
+                        tabOut.append((sym, s, h, l, m, clmC.coeffs[0,l,m]))
 
                 # Skip index errors, can get this is given (l,m) is null/removed for sym group.
                 # TODO: should be fixable from PD DataFrame? Due to shared index over all sym groups?
@@ -432,15 +454,21 @@ class symHarm():
                     pass
 
         # Set new output tables
-        tabOutNP = np.asarray(tabOut)  # Numpy OK, but seems to convert types?
-                                       # Homogeneous type? Would be OK for values only?
+#         tabOutNP = np.asarray(tabOut)  # Numpy OK, but seems to convert types?
+#                                        # Homogeneous type? Would be OK for values only?
+#
+# #         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character', 'SALC (X)', 'PFIX (h)', 'l', 'm'])
+# #         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character ($\Gamma$)', 'SALC (h)', 'PFIX ($\mu$)', 'l', 'm'])
+#         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=self.coeffs['DF']['real'].attrs['indexes']['shortnames'])
+#         dfC = pd.DataFrame(tabOutNP[:,-1].astype(complex), index = mInd, columns=['b (complex)'])
 
-
-#         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character', 'SALC (X)', 'PFIX (h)', 'l', 'm'])
-#         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=['Character ($\Gamma$)', 'SALC (h)', 'PFIX ($\mu$)', 'l', 'm'])
-        mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=self.coeffs['DF']['real'].attrs['indexes']['shortnames'])
-        dfC = pd.DataFrame(tabOutNP[:,-1].astype(complex), index = mInd, columns=['b (complex)'])
-
+        # For structured array version
+        dimTypes = list(zip(self.dims,self.dtypes))  # Dims
+        dimTypes.extend([('b',complex)])   # Data
+        defaultInd = self.dims
+        tabOutNP = np.asarray(tabOut, dtype=dimTypes)
+        mInd = pd.MultiIndex.from_tuples(tabOutNP[:][self.dims].tolist(), names=defaultInd)  # Set index from named dims
+        dfC = pd.DataFrame(tabOutNP[:][tabOutNP.dtype.names[-1]], index = mInd, columns=['b (complex)'])  # Set data from final dim in array
 
         # Store outputs
         # self.coeffTableC = tabOut    # Use raw results here?
@@ -551,10 +579,10 @@ class symHarm():
 
         # Current strucutre - may want to set to dicts?
         # Note hard-coded unstack too - should add as an option
-        if YlmType is 'real':
+        if YlmType == 'real':
             inputData = self.coeffs['DF']['real'].copy().unstack(level=setCols).fillna('')
             inputData.attrs = self.coeffs['DF']['real'].attrs
-        elif YlmType is 'comp':
+        elif YlmType == 'comp':
             inputData = self.coeffs['DF']['comp'].copy().astype(str).unstack(level=setCols).fillna('')  # Note cast to string to avoid `TypeError: No matching signature found` for complex data on unstack (might be PD version bug, tested in v1.0.1)
             inputData.attrs = self.coeffs['DF']['comp'].attrs
         else:
