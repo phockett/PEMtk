@@ -249,10 +249,21 @@ class symHarm():
 
 
 
-    def setCoeffsPD(self):
-        """Convert raw list output to Pandas DataFrame,"""
+    def setCoeffsPD(self, key = 'libmsym', dtype = 'real'):
+        """
+        Convert raw list output to Pandas DataFrame.
 
-        tabOutNP = self.coeffs['libmsym']['real']   # For structured array version
+        Parameters
+        ----------
+        key : str, optional, default = 'libmsym'
+            Key for self.coeffs[key]
+
+        dtype : str, optional, default = 'real'
+            Key for self.coeffs[key][dtype]
+
+        """
+
+        tabOutNP = self.coeffs[key][dtype]   # For structured array version
 
         # tabOutNP = np.asarray(self.coeffs['libmsym']['real'])  # Numpy OK, but seems to convert types?
                                # Homogeneous type? Would be OK for values only?
@@ -282,7 +293,8 @@ class symHarm():
 
         # For structured array version
         mInd = pd.MultiIndex.from_tuples(tabOutNP[:][self.dims].tolist(), names=defaultInd)  # Set index from named dims
-        df = pd.DataFrame(tabOutNP[:][tabOutNP.dtype.names[-1]], index = mInd, columns=['b (real)'])  # Set data from final dim in array
+        # df = pd.DataFrame(tabOutNP[:][tabOutNP.dtype.names[-1]], index = mInd, columns=[f'b (dtype)'])  # Set data from final dim in array
+        df = pd.DataFrame(tabOutNP[:][tabOutNP.dtype.names[-1]], index = mInd, columns=['b'])
 
         # mInd
         df.attrs['indexes']= {'shortnames': defaultInd,
@@ -291,17 +303,22 @@ class symHarm():
                             'libmsym': {'C':'Character', 'h':'SALC', 'mu':'PFIX'},   # 'l', 'm'],
                             'note': "Column name mapping for different sources/conventions. 'shortnames' is default list as used at DF creation."
                             }
-        df.attrs['type'] = 'real'  # REal harmonics from libmsym
+        # df.attrs['type'] = 'real'  # REal harmonics from libmsym
+        df.attrs['type'] = dtype  # Use passed type
 
         # TODO: tidy up output & set names & metadata
 #         df.name = f"Symmetrize harmonic coeffs {self.PG}"  # Not working?
 
 #         self.coeffDF = df.unstack(level='l').fillna('')  # Set cols by l   - DO THIS ONLY FOR DISPLAY LATER? OR ADD A SWITCH/OPTION?
         # self.coeffDF = df  #.unstack(level='l').fillna('')
-        self.coeffs['DF'] = {'real':df}
+
+        if not 'DF' in self.coeffs.keys():
+            self.coeffs['DF'] = {}
+
+        self.coeffs['DF'][dtype] = df
 #         .columns.names
         # self.coeffDF.attrs = df.attrs   # Propagate attribs
-        self.coeffs['DF']['real'].attrs = df.attrs   # Propagate attribs
+        # self.coeffs['DF'][dtype].attrs = df.attrs   # Propagate attribs
 
 
     def setCoeffsSH(self, absM = True):
@@ -462,25 +479,33 @@ class symHarm():
 #         mInd = pd.MultiIndex.from_arrays(tabOutNP[:,:-1].T, names=self.coeffs['DF']['real'].attrs['indexes']['shortnames'])
 #         dfC = pd.DataFrame(tabOutNP[:,-1].astype(complex), index = mInd, columns=['b (complex)'])
 
-        # For structured array version
-        dimTypes = list(zip(self.dims,self.dtypes))  # Dims
-        dimTypes.extend([('b',complex)])   # Data
-        defaultInd = self.dims
-        tabOutNP = np.asarray(tabOut, dtype=dimTypes)
-        mInd = pd.MultiIndex.from_tuples(tabOutNP[:][self.dims].tolist(), names=defaultInd)  # Set index from named dims
-        dfC = pd.DataFrame(tabOutNP[:][tabOutNP.dtype.names[-1]], index = mInd, columns=['b (complex)'])  # Set data from final dim in array
+        # # For structured array version
+        # dimTypes = list(zip(self.dims,self.dtypes))  # Dims
+        # dimTypes.extend([('b',complex)])   # Data
+        # defaultInd = self.dims
+        # tabOutNP = np.asarray(tabOut, dtype=dimTypes)
+        # mInd = pd.MultiIndex.from_tuples(tabOutNP[:][self.dims].tolist(), names=defaultInd)  # Set index from named dims
+        # dfC = pd.DataFrame(tabOutNP[:][tabOutNP.dtype.names[-1]], index = mInd, columns=['b (complex)'])  # Set data from final dim in array
+
 
         # Store outputs
         # self.coeffTableC = tabOut    # Use raw results here?
-        self.coeffs['libmsym']['comp'] = tabOut
-        self.coeffs['DF']['comp'] = dfC
-        self.coeffs['DF']['comp'].attrs = self.coeffs['DF']['real'].attrs  # Use inital attribs
-        self.coeffs['DF']['comp'].attrs['type'] = 'comp'
+        # self.coeffs['libmsym']['comp'] = tabOut
+        # self.coeffs['DF']['comp'] = dfC
+        # self.coeffs['DF']['comp'].attrs = self.coeffs['DF']['real'].attrs  # Use inital attribs
+        # self.coeffs['DF']['comp'].attrs['type'] = 'comp'
 #         self.clm = {'re':clm, 'im':clmC, 'note':'SHtools clm coefficient objects, re (real) and im (complex) harmonic expansions.'}
         # self.clm = clmSets
         # self.clm.update({'note':'SHtools clm coefficient objects, real and comp (complex) harmonic expansions.'})
         self.coeffs['SH'] = clmSets
         self.coeffs['SH'].update({'note':'SHtools clm coefficient objects, real and comp (complex) harmonic expansions.'})
+
+        # With unified methods
+        # Convert to NP structured array (keeps heterogeneous dtypes)
+        dimTypes = list(zip(self.dims,self.dtypes))  # Dims
+        dimTypes.extend([('b',complex)])   # Data
+        self.coeffs['libmsym'] = {'comp':np.asarray(tabOut, dtype=dimTypes)}
+        self.setCoeffsPD(dtype = 'comp')
 
 
     def setCoeffsXR(self, stack = True):
@@ -498,8 +523,8 @@ class symHarm():
         """
 
         if xrFlag:
-            coeffsXR = xr.Dataset.from_dataframe(self.coeffs['DF']['real'])
-            coeffsXR.update(xr.Dataset.from_dataframe(self.coeffs['DF']['comp']))
+            coeffsXR = xr.Dataset.from_dataframe(self.coeffs['DF']['real']).rename({'b':'b (real)'})
+            coeffsXR.update(xr.Dataset.from_dataframe(self.coeffs['DF']['comp']).rename({'b':'b (comp)'}))
 
             self.coeffs['XR'] = coeffsXR
 
