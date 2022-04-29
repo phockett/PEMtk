@@ -28,7 +28,7 @@ from epsproc import matEleSelector, multiDimXrToPD
 from epsproc.util.misc import subselectDims
 
 from ._util import phaseCorrection as phaseCorrFunc
-from ._util import addColLevel
+from ._util import addColLevel, renameParams
 
 # #*** Plot setup - NOW MOVED TO .util.hvPlotters.py
 # NOTE POSSIBLE SCOPE ISSUES HERE - currently resolved by importing to self.hv, but may not be best practice.
@@ -616,7 +616,7 @@ def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide',
 #
 
 def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = 'dfPF',
-            thres = None, mask = True, binRange = None, backend = 'hv'):
+            thres = None, mask = True, binRange = None, backend = 'hv', plotDict = 'plots'):
     """
     Basic histogram plot of batch fit results.
 
@@ -657,6 +657,9 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = '
         Specify backend:
         - 'hv' for Holoviews
         - 'pd' or 'mpl' for Pandas.hist()
+
+    plotDict : str, optional, default = 'plots'
+        For hv case, return plot object & data to self.data[plotDict] as ['fitHistPlot'] and ['fitHistData']
 
     Notes:
 
@@ -719,6 +722,13 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = '
         # print(bins, binsHV, num_bins, binRange)
         hvObj = self.hv.Scatter(pData.reset_index(), kdims=dataType).hist(dimension=[dataType,'Fit'], bins = binsHV, num_bins = num_bins, bin_range = binRange)
 
+        # Set output
+        if not plotDict in self.data.keys():
+            self.data[plotDict] = {}
+
+        self.data[plotDict]['fitHistData'] = pData
+        self.data[plotDict]['fitHistPlot'] = hvObj
+
         # Code from showPlot()
         if self.__notebook__:     # and (not returnImg):
             display(hvObj)  # If notebook, use display to push plot.
@@ -754,7 +764,7 @@ def _mergePFLong(self, pData, key, dataPF, hue, hRound):
 
 def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRound = None,
             dataType = None, level = None, sel = None, selLevel = 'redchiGroup',
-            dataPF = 'dfPF', plotDict = 'plots',
+            dataPF = 'dfPF', plotDict = 'plots', remap = None,
             backend = 'sns', pairgrid = False, **kwargs):
     """
     Similar to paramPlot(), but set for correlation matrix plotter.
@@ -804,6 +814,11 @@ def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRoun
     if hRound is not None:
         # Round/rebin hue data to specified dp.
         pData[hue] = pData[hue].apply(np.round, decimals = hRound)
+
+    # Rename params for plotting?
+    if remap is not None:
+        pData = renameParams(pData, self.lmmu[remap])  # Remap columns
+        # pDataLong.replace({'Param':self.lmmu[remap]}, inplace=True)
 
 
     # Create plot
@@ -855,7 +870,7 @@ def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redc
             hue = None, hRound = 7, x='Param', y='value',
             key = 'fits', dataDict = 'dfWide', dataPF = 'dfPF', plotDict = 'plots',
             # thres = None, mask = True,
-            hvType = None,
+            hvType = None, remap = None,
             backend = 'sns', returnFlag = False):
     """
     Basic scatter-plot of parameter values by name/type.
@@ -935,6 +950,10 @@ def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redc
     # Output current plot data for ref.
     if not plotDict in self.data.keys():
         self.data[plotDict] = {}
+
+    # Rename params for plotting?
+    if remap is not None:
+        pDataLong.replace({'Param':self.lmmu[remap]}, inplace=True)
 
     self.data[plotDict]['paramData'] = pDataLong
 
