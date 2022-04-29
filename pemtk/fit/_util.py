@@ -56,6 +56,49 @@ def addColLevel(df, newCol = 'ref', names = ['Dataset','Type']):
     df.columns = newCols
 
 
+# Quick go at general remapper from dict - need to change by type (ind, col, val)? What about multiindex?
+# Maybe with getattr(data.data['plots']['corrData'],'columns'), then by type? (Index or not)
+# Should be a solved problem...?
+def renameParams(data, mapDict, mapType = 'col'):
+    """
+    Very basic column name reampper for Pandas DataFrame. Based on routine in SymHarm class.
+
+    21/04/22    v1 for testing only.
+
+    TODO: generalise this & consolidate!
+
+    See also value remapping in paramPlot() routine.
+
+    """
+
+    # With variable len remap
+    newNames = []
+    for k in data.columns:
+#         print(k)
+
+# If in attrs
+#         if k in inputData.attrs['indexes'][names].keys():
+#             newNames.append(inputData.attrs['indexes'][names][k])
+#         else:
+#             newNames.append(k)
+
+# If passed
+        if k in mapDict.keys():
+            newNames.append(mapDict[k])
+        else:
+            newNames.append(k)
+
+#     print(newNames)
+#         test = self.coeffDF.copy()   # Display as is
+
+    test = data.copy()   # With unstack and fillna
+#     print(test.columns.rename(Params = newNames))
+    test.columns = pd.MultiIndex.from_arrays([newNames], names = ['l,m']).get_level_values(0)  # Force to single level?
+    # print(test)
+
+    return test
+
+
 
 # TODO: revise and wrap this properly!
 # Should push corrected phase back to original table as new dim?
