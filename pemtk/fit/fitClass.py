@@ -347,6 +347,13 @@ class pemtkFit(dataClass):
         lmmuListStr = lmmuListStrReformat(lmmuList)
         lmmu['Str'] = lmmuListStr
 
+        # Generate (l,m) labels
+        lmList = lmmu['Index'].droplevel(['Cont','Targ','Total','mu','it'])  # NOTE this assumes dims, should change to slice?
+        strLabels = [','.join(str(ele) for ele in sub) for sub in lmList]
+
+        # Generate map {full names : lm lables}
+        lmmu['lmMap'] = dict(zip(lmmu['Str'], strLabels))
+
     #     return lmmu
 
         # Set mapping of labels (n, item, abs(item), phase(item)) to use for param remapping
@@ -369,7 +376,7 @@ class pemtkFit(dataClass):
 
         # Set any passed constraints
         if paramsCons is not None:
-            if paramsCons is 'auto':
+            if paramsCons == 'auto':
                 paramsCons, _ = self.symCheck(pdTest = pdTest, colDim = colDim)
 
                 if verbose:
