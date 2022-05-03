@@ -470,7 +470,8 @@ class pemtkFit(dataClass):
 
     # def afblmMatEfit(self, matE = None, lmmuList = None, data = None, basis = None, ADM = None, pol = None, selDims = {}, thres = None, thresDims = 'Eke', lmModelFlag = False, XSflag = True, **kwargs):
     def afblmMatEfit(self, matE = None, data = None, lmmuList = None, basis = None, ADM = None, pol = None, resetBasis = False,
-                        selDims = {}, thres = None, thresDims = 'Eke', lmModelFlag = False, XSflag = True, **kwargs):
+                        selDims = {}, thres = None, thresDims = 'Eke', lmModelFlag = False, XSflag = True,
+                        weights = None, **kwargs):
         """
         Wrap :py:func:`epsproc.geomFunc.afblmXprod` for use with lmfit fitting routines.
 
@@ -480,20 +481,43 @@ class pemtkFit(dataClass):
         matE : Xarray or lmfit Parameters object
             Matrix elements to use in calculation.
             For Parameters object, also require lmmuList to convert to Xarray.
-            If not passed, use self.subset.
+            If not passed, use self.data[self.subKey]['matE'].
 
+        data : Xarray, optional, default = None
+            Data for fitting.
+            If set, return residual.
+            If not set, return model result.
 
-        ADM : Xarray.
+        lmmuList : list, optional, default = None
+            Mapping for paramters.
+            Uses self.lmmu if not passed.
+
+        basis : dict, optional, default = None
+            Pre-computed basis set to use for calculations.
+            If not set try to use self.basis, or passed set of ADMs.
+            NOTE: currently defaults to self.basis if it exists, pass resetBasis=True to force overwrite.
+
+        ADM : Xarray
             Set of ADMs (alignment parameters). Not required if basis is set.
 
         pol : Xarray
+            NOTE: currently NOT used for :py:func:`epsproc.geomFunc.afblmXprod`
             Set of polarization geometries (Euler angles). Not required if basis is set.
             (If not set, defaults to ep.setPolGeoms())
 
+        resetBasis : bool, optional, default=False
+            Force self.basis overwrite with updated values.
+            NOT YET IMPLEMENTED
 
-        basis : optional, default = None
-            Use to pass pre-computed basis set.
-            NOTE: currently defaults to self.basis if it exists, pass resetBasis=True to force overwrite.
+        weights : int, Xarray or np.array, optional, default = None
+            Weights to use for residual calculation.
+            If None, unweighted residual.
+            If int or float, set weights = rng.poisson(weights, data.shape). Note this operates per data-point, not per dimension.
+            If Xarray or np.array, use directly - must match size of data along key dimension, e.g. passing weights = rng.poisson(weights, data.t.size) will generate a distribution along the t-dimension.
+
+            For bootstrap sampling, setting Poissonian weights can be used, see https://en.wikipedia.org/wiki/Bootstrapping_(statistics)#Poisson_bootstrap
+            To use uncertainties from the data, set weights = 1/(sigma^2)
+
 
         NOTE:
 
@@ -513,6 +537,9 @@ class pemtkFit(dataClass):
         # if data is None:
         #     # data = self.data
         #     data = self.fitData
+
+        # if resetBasis:
+        #     basis =
 
         if basis is None:
             # if hasattr(self,'basis') and (not resetBasis) and (self.basis is not None):
@@ -546,6 +573,8 @@ class pemtkFit(dataClass):
                                            basisReturn = 'ProductBasis', BLMRenorm = BLMRenorm, **kwargs)
 
     #         return BetaNormX, basis
+            # if resetBasis:
+            #     self.basis = basis
 
         else:
             # Pass **basis here to allow for passing generically through fitting routine and easy/flexible unpacking into afblmXprod()
@@ -555,7 +584,19 @@ class pemtkFit(dataClass):
     #         return BetaNormX
 
         if data is not None:
-            return (np.abs(BetaNormX - data)).values.flatten()   # Need to return NP array of residual for lmfit minimize fitting routine
+            if weights is None:
+                return (np.abs(BetaNormX - data)).values.flatten()   # Need to return NP array of residual for lmfit minimize fitting routine
+
+            # Poissonian weights
+            elif isinstance(weights, int) or isinstance(weights, float):
+                rng = np.random.default_rng()
+                weights = rng.poisson(weights, BetaNormX.shape)
+
+                return (np.sqrt(weights) * np.abs(BetaNormX - data)).values.flatten()
+
+            # Weights as passed 
+            else:
+                return (np.sqrt(weights) * np.abs(BetaNormX - data)).values.flatten()
 
         else:
             if lmModelFlag:
@@ -566,16 +607,24 @@ class pemtkFit(dataClass):
 
 
     # Wrap fit routine
-    def fit(self, fitInd = None, keepSubset = False, **kwargs):
+    def fit(self, fcn_args = None, fcn_kws = None, fitInd = None, keepSubset = False, **kwargs):
         """
 
-        Wrapper to run lmfit.Minimizer.
+        Wrapper to run lmfit.Minimizer, for details see https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer
 
         Uses preset self.params for parameters, and self.data[self.subKey] for data.
 
 
         Parameters
         -----------
+        fcn_args : tuple, optional, default = None
+            Positional arguments to pass to the fitting function.
+            If None, will be set as (self.data[self.subKey]['AFBLM'], self.lmmu, self.basis)
+
+        fcn_kws : dict, optional, default = {}
+            Keyword arguments to pass to the fitting function.
+
+
         fitInd : int, optional, default = None
             If None, will use self.fitInd
             For parallel usage, supply explicit fitInd instead of using class var to ensure unique key per fit.
@@ -598,13 +647,15 @@ class pemtkFit(dataClass):
             fitInd = self.fitInd
             self.fitInd += 1
 
+        if fcn_args is None:
+            fcn_args = (self.data[self.subKey]['AFBLM'], self.lmmu, self.basis)
 
         # Setup fit
     #     self.minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=(self.data['subset']['AFBLM']))  # , fcn_args=(lmmuList, BetaNormX, basis))  # In this case fn. args present as self.arg, but leave data as passed arg.
     #     minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=(self.data['subset']['AFBLM'].sel(Eke=1.1), self.lmmu, self.basis))  # Above not working with or without 'self', try explicit args instead... THIS IS WORKING, almost, but not quite passing correct things...
 
         # minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=(self.data['subset']['AFBLM'].sel(Eke=1.1), self.lmmu, self.basis))  # Now working OK, just need to sort data pass/setting.
-        minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=(self.data[self.subKey]['AFBLM'], self.lmmu, self.basis), **kwargs)  # Now working OK, just need to sort data pass/setting.
+        minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=fcn_args, fcn_kws=fcn_kws, **kwargs)  # Now working OK, just need to sort data pass/setting.
 
         # Setup with function version to check arg passing OK - NOTE ORDERING is currently different!
     #     minner = Minimizer(afblmMatEfit, self.params, fcn_args=(self.lmmu, self.data['subset']['AFBLM'], self.basis))
