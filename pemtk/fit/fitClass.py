@@ -566,13 +566,29 @@ class pemtkFit(dataClass):
 
 
     # Wrap fit routine
-    def fit(self, fitInd = None):
+    def fit(self, fitInd = None, keepSubset = False, **kwargs):
         """
+
         Wrapper to run lmfit.Minimizer.
 
-        Uses preset self.* parameters.
+        Uses preset self.params for parameters, and self.data[self.subKey] for data.
 
-        For parallel usage, supply explicit fitInd instead of using class var.
+
+        Parameters
+        -----------
+        fitInd : int, optional, default = None
+            If None, will use self.fitInd
+            For parallel usage, supply explicit fitInd instead of using class var to ensure unique key per fit.
+
+        keepSubset : bool, optional, default = False
+            If True, keep a copy of self.data[self.subKey] in self.data[fitInd][self.subKey]
+
+        **kwargs
+            Passed to the fitting functions, for options see:
+            - For lmfit options and defaults see https://lmfit.github.io/lmfit-py/fitting.html
+            - For scipy (lmfit backend) see https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html
+
+        02/05/22: added **kwags for backends.
 
         07/09/21: updating for parallel use.
                     Note that main outputs (self.reults etc.) are now dropped. May want to set to last result?
@@ -588,7 +604,7 @@ class pemtkFit(dataClass):
     #     minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=(self.data['subset']['AFBLM'].sel(Eke=1.1), self.lmmu, self.basis))  # Above not working with or without 'self', try explicit args instead... THIS IS WORKING, almost, but not quite passing correct things...
 
         # minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=(self.data['subset']['AFBLM'].sel(Eke=1.1), self.lmmu, self.basis))  # Now working OK, just need to sort data pass/setting.
-        minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=(self.data[self.subKey]['AFBLM'], self.lmmu, self.basis))  # Now working OK, just need to sort data pass/setting.
+        minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=(self.data[self.subKey]['AFBLM'], self.lmmu, self.basis), **kwargs)  # Now working OK, just need to sort data pass/setting.
 
         # Setup with function version to check arg passing OK - NOTE ORDERING is currently different!
     #     minner = Minimizer(afblmMatEfit, self.params, fcn_args=(self.lmmu, self.data['subset']['AFBLM'], self.basis))
@@ -617,6 +633,9 @@ class pemtkFit(dataClass):
         self.data[fitInd]['residual'] = residual.copy()
         self.data[fitInd]['results'] = result  #.copy()  # Full object copy here.
 
+        # Keep subset data? Useful in some cases
+        if keepSubset:
+            self.data[fitInd][self.subKey] = self.data[self.subKey].copy()
 
         # Add some metadata
         timeString = dt.now().strftime('%Y-%m-%d_%H-%M-%S')
