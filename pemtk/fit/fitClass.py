@@ -512,6 +512,7 @@ class pemtkFit(dataClass):
         weights : int, Xarray or np.array, optional, default = None
             Weights to use for residual calculation.
             If None, unweighted residual.
+            If True, use self.data[self.subKey]['weights']
             If int or float, set weights = rng.poisson(weights, data.shape). Note this operates per data-point, not per dimension.
             If Xarray or np.array, use directly - must match size of data along key dimension, e.g. passing weights = rng.poisson(weights, data.t.size) will generate a distribution along the t-dimension.
 
@@ -523,6 +524,15 @@ class pemtkFit(dataClass):
 
         - some assumptions here, will probably need to run once to setup (with ADMs), then fit using basis returned.
         - Currently fitting abs matrix elements and renorm Betas. This sort-of works, but gives big errors on |matE|. Should add options to renorm matE for this case, and options for known B00 values.
+
+        TODO:
+
+        - Consolidate weights to main data structure.
+            04/05/22: added to basis return as basis['weights'], may want to pipe back to self.data[self.subKey]['weights'], or just set elsewhere?
+        - More sophisticated bootstrapping methods, maybe with https://github.com/smartass101/xr-random and https://arch.readthedocs.io/en/latest/index.html
+
+
+        02/05/22: added weights options and updated docs.
 
         """
 
@@ -583,18 +593,32 @@ class pemtkFit(dataClass):
 
     #         return BetaNormX
 
+        # Setup weights if required
+        if weights is not None:
+            # Poissonian weights
+            if isinstance(weights, int) or isinstance(weights, float):
+                rng = np.random.default_rng()
+                weights = rng.poisson(weights, BetaNormX.shape)
+
+            # Use existing settings if True
+            elif weights == True:
+                weights = self.data[self.subKey]['weights']
+
+        # Add to basis for return if required.
+        basis['weights'] = weights
+
         if data is not None:
             if weights is None:
                 return (np.abs(BetaNormX - data)).values.flatten()   # Need to return NP array of residual for lmfit minimize fitting routine
 
             # Poissonian weights
-            elif isinstance(weights, int) or isinstance(weights, float):
-                rng = np.random.default_rng()
-                weights = rng.poisson(weights, BetaNormX.shape)
+            # elif isinstance(weights, int) or isinstance(weights, float):
+            #     rng = np.random.default_rng()
+            #     weights = rng.poisson(weights, BetaNormX.shape)
+                #
+                # return (np.sqrt(weights) * np.abs(BetaNormX - data)).values.flatten()
 
-                return (np.sqrt(weights) * np.abs(BetaNormX - data)).values.flatten()
-
-            # Weights as passed 
+            # Weights as passed
             else:
                 return (np.sqrt(weights) * np.abs(BetaNormX - data)).values.flatten()
 
