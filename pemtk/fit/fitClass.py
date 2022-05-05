@@ -50,6 +50,8 @@ from epsproc.sphPlot import plotTypeSelector
 # Now moved to ._util, should move to ..util?
 from ._util import lmmuListStrReformat
 
+from ._stats import setWeights
+
 # Plotters - testing import routines here, include modules & flags
 # from epsproc.plot import hvPlotters  # Should probably use this!
 # from pemtk.util.hvPlotters import setPlotDefaults  # Pkg version, opts function only (as per tmo-dev)
@@ -597,8 +599,9 @@ class pemtkFit(dataClass):
         if weights is not None:
             # Poissonian weights
             if isinstance(weights, int) or isinstance(weights, float):
-                rng = np.random.default_rng()
-                weights = rng.poisson(weights, BetaNormX.shape)
+                # rng = np.random.default_rng()
+                # weights = rng.poisson(weights, BetaNormX.shape)
+                weights = setWeights(weights, BetaNormX.shape)
 
             # Use existing settings if True
             elif weights == True:
