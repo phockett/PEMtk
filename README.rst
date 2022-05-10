@@ -26,7 +26,7 @@ Currently implemented
 ---------------------
 
 - `Symmetrized harmonics generation functions (March 2022) <https://pemtk.readthedocs.io/en/latest/sym/pemtk_symHarm_demo_160322_tidy.html>`__.
-- `Fitting analysis functions and plotters (Dec. 2021) <https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_multiproc_class_analysis_141121-tidy.html)`__.
+- `Fitting analysis functions and plotters (Dec. 2021) <https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_multiproc_class_analysis_141121-tidy.html>`__.
 - Basic data model (from `ePSproc base class <https://epsproc.readthedocs.io/en/latest/demos/ePSproc_class_demo_161020.html>`__ currently) and `fitting class (20/05/21) + docs <https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_basic_demo_030621-full.html>`__.
 - Code framework and notes (August 2020).
 
