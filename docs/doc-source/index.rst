@@ -8,6 +8,13 @@
 Welcome to PEMtk - the Photoelectron Metrology Toolkit
 ======================================================
 
+(aka Quantum Metrology with Photoelectrons platform data & analysis
+layer: the unifiying layer (glue) for the platform)
+
+Currently, the platform is under development, based on methods developed over the last 10+ years of reasearch in this area. On the theory side, work is based around ePolyScat, and a set of python packages have already been developed; on the experimental side, the plan is to update existing Matlab codes for Velocity Map Imaging (VMI) experiments and analysis routines (and rewrite/unify in python). The real foundation, and glue, for the platform will be the Photoelectron metrology toolkit (PEMtk), which will provide the unifying data platform, and analysis routines. In the future, it is hoped that this platform will be extended to other theoretical and experimental methods, but continue to provide a useful, unifying, platform.
+
+See the `intro for more details <about.html>`__.
+
 .. toctree::
    :maxdepth: 2
    :caption: Intro:
