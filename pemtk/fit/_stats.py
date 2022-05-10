@@ -11,13 +11,18 @@
 
 import numpy as np
 
-def setWeights(lam, wShape):
+def setPoissWeights(lam, wShape):
     """
     Poissionian weights.
 
     Set using https://numpy.org/devdocs/reference/random/generated/numpy.random.Generator.poisson.html
 
     Pass (lambda, shape)
+
+    If int or float, set weights = rng.poisson(weights, data.shape).
+    Note this operates per data-point, not per dimension.
+
+    - If Xarray or np.array, use directly - must match size of data along key dimension, e.g. passing weights = rng.poisson(weights, data.t.size) will generate a distribution along the t-dimension.
 
     """
 

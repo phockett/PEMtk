@@ -49,8 +49,7 @@ from epsproc.sphPlot import plotTypeSelector
 
 # Now moved to ._util, should move to ..util?
 from ._util import lmmuListStrReformat
-
-from ._stats import setWeights
+from ._stats import setPoissWeights
 
 # Plotters - testing import routines here, include modules & flags
 # from epsproc.plot import hvPlotters  # Should probably use this!
@@ -79,6 +78,7 @@ class pemtkFit(dataClass):
     from ._filters import thresFits, _subsetFromXS, getFitInds
     from ._parallel import multiFit
     from ._plotters import BLMfitPlot, lmPlotFit, BLMsetPlot
+    # from ._stats import setPoissWeights
     from ._sym import symCheck
     from ._util import setClassArgs, _setDefaultFits
 
@@ -156,6 +156,40 @@ class pemtkFit(dataClass):
             self.data[keyExpt] = {'AFBLM':self.data[keyData]['AFBLM']}
         else:
             self.data[keyExpt] = {'AFBLM':keyData}
+
+
+    def setWeights(self, wConfig = None, keyExpt = None, keyData = None, **kwargs):
+        """
+        Wrapper for setting weights for/from data. Basically follows self.setData, with some additional options.
+
+        Will set self.data[keyExpt]['weights'] from existing data if keyData is a string, or from keyData as passed otherwise.
+
+        Parameters
+        ----------
+
+        wConfig : optional, str, default = None
+            Additional handling for weights.
+            - 'poission', set Poissionian weights to match data dims using self.setPoissWeights()
+            - 'errors', set weights as 1/(self.data[keyExpt]['weights']**2)
+
+
+        """
+
+        # Basic setup, as per setData()
+        if isinstance(keyData, str):
+            self.data[keyExpt]['weights'] = self.data[keyData]['weights']
+        else:
+            self.data[keyExpt]['weights'] = keyData
+
+        # Additional data handling & options...
+        if wConfig == 'poission':
+            self.data[keyExpt]['weights'] = setPoissWeights(1.0, self.data[keyExpt]['AFBLM'].shape)
+        elif wConfig == 'errors':
+            self.data[keyExpt]['weights'] = 1/(self.data[keyExpt]['weights']**2)
+
+
+
+
 
 
     def setADMs(self, **kwargs):
@@ -513,12 +547,12 @@ class pemtkFit(dataClass):
 
         weights : int, Xarray or np.array, optional, default = None
             Weights to use for residual calculation.
-            If None, unweighted residual.
-            If True, use self.data[self.subKey]['weights']
-            If int or float, set weights = rng.poisson(weights, data.shape). Note this operates per data-point, not per dimension.
-            If Xarray or np.array, use directly - must match size of data along key dimension, e.g. passing weights = rng.poisson(weights, data.t.size) will generate a distribution along the t-dimension.
+            - If set, return np.sqrt(weights) * residual. (Must match size of data along key dimension(s).)
+            - If None, try to use use self.data[self.subKey]['weights'].
+              If that is not found, or is None, an unweighted residual will be returned.
 
             For bootstrap sampling, setting Poissonian weights can be used, see https://en.wikipedia.org/wiki/Bootstrapping_(statistics)#Poisson_bootstrap
+            Use self.setWeights() for this, e.g. weights = rng.poisson(weights, data.t.size)
             To use uncertainties from the data, set weights = 1/(sigma^2)
 
 
@@ -595,20 +629,26 @@ class pemtkFit(dataClass):
 
     #         return BetaNormX
 
-        # Setup weights if required
-        if weights is not None:
-            # Poissonian weights
-            if isinstance(weights, int) or isinstance(weights, float):
-                # rng = np.random.default_rng()
-                # weights = rng.poisson(weights, BetaNormX.shape)
-                weights = setWeights(weights, BetaNormX.shape)
+        # Setup weights if required - v1 with flexibility
+        # if weights is not None:
+        #     # Poissonian weights
+        #     if isinstance(weights, int) or isinstance(weights, float):
+        #         # rng = np.random.default_rng()
+        #         # weights = rng.poisson(weights, BetaNormX.shape)
+        #         weights = setWeights(weights, BetaNormX.shape)
+        #
+        #     # Use existing settings if True
+        #     elif weights == True:
+        #         weights = self.data[self.subKey]['weights']
+        #
+        # # Add to basis for return if required.
+        # basis['weights'] = weights
 
-            # Use existing settings if True
-            elif weights == True:
+        # Weights v2 - just set as per pol, ADM etc. from class.
+        # If None will be skipped later in any case.
+        if weights is None:
+            if 'weights' in self.data[self.subKey].keys():
                 weights = self.data[self.subKey]['weights']
-
-        # Add to basis for return if required.
-        basis['weights'] = weights
 
         if data is not None:
             if weights is None:
