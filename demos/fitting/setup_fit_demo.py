@@ -4,6 +4,7 @@
 
 print('*** Setting up demo fitting workspace and main `data` class object...')
 print('For more details see https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_basic_demo_030621-full.html')
+print('To use local source code, pass the parent path to this script at run time, e.g. "setup_fit_demo ~/github"')
 print('\n\n* Loading packages...')
 
 # A few standard imports...
@@ -29,43 +30,39 @@ timeString = dt.now()
 
 # With passed arg
 args = sys.argv
+localFlag = False
+
 if len(args) > 1:
     modPath = Path(args[1])
 
-# if len(args) > 2:
-#     pCons = Path(args[2])
+    # Append to sys path
+    sys.path.append((modPath/'ePSproc').as_posix())
+    sys.path.append((modPath/'PEMtk').as_posix())
+
+    localFlag = True
+
+
+try:
+    # ePSproc
+    import epsproc as ep
+
+    # Import fitting class
+    from pemtk.fit.fitClass import pemtkFit
 
 # Default case
 # if not 'modPath' in locals():
-else:
-    if sys.platform == "win32":
-        modPath = Path(r'D:\code\github')  # Win test machine
-        winFlag = True
+except ImportError as e:
+    if localFlag:
+        print(f"\n*** Couldn't import local packages from root {modPath}.")
     else:
-        modPath = Path(r'/home/femtolab/github')  # Linux test machine
-        winFlag = False
+        print(f"\n*** Couldn't import packages, are ePSproc and PEMtk installed? For local copies, pass parent path to this script.")
 
-print(f'\n* Importing local packages from root {modPath}. Pass search path to the script if this fails.')
-
-# Append to sys path
-sys.path.append((modPath/'ePSproc').as_posix())
-sys.path.append((modPath/'PEMtk').as_posix())
-
-# +
-# ePSproc
-import epsproc as ep
 
 # Set data path
 # Note this is set here from ep.__path__, but may not be correct in all cases - depends on where the Github repo is.
 epDemoDataPath = Path(ep.__path__[0]).parent/'data'
 
-# +
-# PEMtk
-# import pemtk as pm
-# from pemtk.data.dataClasses import dataClass
 
-# Import fitting class
-from pemtk.fit.fitClass import pemtkFit
 
 # +
 # Set HTML output style for Xarray in notebooks (optional), may also depend on version of Jupyter notebook or lab, or Xr
@@ -87,7 +84,6 @@ ep.plot.hvPlotters.setPlotters()
 #
 # In this demo, a real case will first be simulated with computational values, and then used to test the fitting routines.
 #
-# (TODO: demo from scratch without known matrix elements.)
 #
 # #### Matrix elements
 #
@@ -100,7 +96,6 @@ ep.plot.hvPlotters.setPlotters()
 
 # Multiorb data
 dataPath = os.path.join(epDemoDataPath, 'photoionization', 'n2_multiorb')
-# -
 
 print(f'\n* Loading demo matrix element data from {dataPath}...')
 
@@ -118,13 +113,9 @@ data.jobsSummary()
 
 # Default case
 data.setADMs()
-# data.ADM['ADMX']
-# data.data['ADM']['ADM']
 
-# +
 # Load time-dependent ADMs for N2 case
 # Adapted from ePSproc_AFBLM_testing_010519_300719.m
-
 from scipy.io import loadmat
 ADMdataFile = os.path.join(epDemoDataPath, 'alignment', 'N2_ADM_VM_290816.mat')
 
@@ -139,18 +130,7 @@ ADMs['time'] = ADMs['time'] + tOffset
 
 data.setADMs(ADMs = ADMs['ADM'], t=ADMs['time'].squeeze(), KQSLabels = ADMs['ADMlist'], addS = True)
 data.data['ADM']['ADM']
-# -
 
-# The ADMplot routine will show a basic line plot, note it needs keys = 'ADM' in the current implementation (otherwise will loop over all keys)
-# data.ADMplot(keys = 'ADM')
-
-# +
-# lmPlot is also handy, it minimally needs the correct keys, dataType and xDim specified
-
-# data.lmPlot(keys = 'ADM', dataType = 'ADM', xDim = 't')  # Minimal call
-
-# data.lmPlot(keys = 'ADM', dataType = 'ADM', xDim = 't', fillna = True, logFlag = False, cmap = 'vlag')  # Set some additional options
-# -
 
 # ### Polarisation geometry/ies
 #
@@ -160,18 +140,13 @@ data.data['ADM']['ADM']
 #
 
 data.setPolGeoms()
-# data.data['pol']['pol']
+
 
 # +
 # # data.setPolGeoms(eulerAngs = [[0,0,0]], labels = ['z'])
 # data.setPolGeoms(eulerAngs = [0,0,0], labels = 'z')
 # data.data['pol']['pol']  #.swap_dims({'Euler':'Labels'})
 
-# +
-# data.data['pol']['pol'] = data.data['pol']['pol'].swap_dims({'Euler':'Labels'})
-# data.selOpts['pol'] = {'inds': {'Labels': 'z'}}
-# data.setSubset(dataKey = 'pol', dataType = 'pol')
-# -
 
 # ### Subselect data
 #
@@ -186,39 +161,15 @@ print(f'\n* Subselecting data...')
 data.selOpts['matE'] = {'thres': 0.01, 'inds': {'Type':'L', 'Eke':1.1}}
 data.setSubset(dataKey = 'orb5', dataType = 'matE')  # Subselect from 'orb5' dataset, matrix elements
 
-# Show subselected data
-# data.data['subset']['matE']
-
-# +
-# Tabulate the matrix elements
-# Not showing as nice table for singleton case - pd.series vs. dataframe?
-# data.matEtoPD(keys = 'subset', xDim = 'Sym', dropna=False)
-
-# data.data['subset']['matE'].attrs['pd'] # PD set here
-# -
 
 # And for the polarisation geometries...
 data.selOpts['pol'] = {'inds': {'Labels': 'z'}}
 data.setSubset(dataKey = 'pol', dataType = 'pol')
 
-# +
 # And for the ADMs...
-
 data.selOpts['ADM'] = {}   #{'thres': 0.01, 'inds': {'Type':'L', 'Eke':1.1}}
 data.setSubset(dataKey = 'ADM', dataType = 'ADM', sliceParams = {'t':[4, 5, 4]})
-# data.ADMplot(keys = 'subset')
 
-# +
-# Cusomise plot with return...
-# NOT YET IMPLEMENTED
-# pltObj = data.ADMplot(keys = 'subset')
-# pltObj
-# -
-
-# Plot from Xarray vs. full dataset
-# data.data['subset']['ADM'].where(ADMX['K']>0).real.squeeze().plot.line(x='t');
-# data.data['subset']['ADM'].real.squeeze().plot.line(x='t', marker = 'x', linestyle='dashed');
-# data.data['ADM']['ADM'].real.squeeze().plot.line(x='t');
 
 # ## Compute AF-$\beta_{LM}$ and simulate data
 #
@@ -246,23 +197,9 @@ BetaNormX, basis = data.afblmMatEfit()  # OK, uses default polarizations & ADMs 
 
 # The returned objects contain the $\beta_{LM}$ parameters as an Xarray...
 
-BetaNormX
+# BetaNormX
 
-# ep.BLMplot(BetaNormX, xDim = 't')  # SIGH, not working - issue with Euler/Labels?
-# BetaNormX.sel(Labels='z').real.squeeze().plot.line(x='t');
-# ep.lmPlot(BetaNormX.sel(Labels='z'), xDim='t', SFflag=False);  #, cmap='vlag');
-# ep.lmPlot(BetaNormX, xDim='t', SFflag=False);
-# data.lmPlot()
 
-# Line-plot with Xarray/Matplotlib
-# Note there is no filtering here, so this includes some invalid and null terms
-# BetaNormX.sel(Labels='z').real.squeeze().plot.line(x='t');
-
-# ... and the basis sets as a dictionary.
-
-# basis.keys()
-
-# Note that the basis sets here will may be useful for deeper insight into the physics, and fitting routines, and are explored in a separate notebook.
 
 # ## Fitting the data
 #
