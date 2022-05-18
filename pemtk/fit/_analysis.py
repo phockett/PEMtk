@@ -61,7 +61,7 @@ from ._util import addColLevel, renameParams
 #     print(isnotebook())
 
 
-def analyseFits(self, dataRange = None):
+def analyseFits(self, dataRange = None, batches = None):
     """
     Collate fit data from multiple runs.
 
@@ -77,7 +77,7 @@ def analyseFits(self, dataRange = None):
     #*** Reformat data from class.
 
     # Convert fit results to Pandas
-    dfLong, dfRef = self.pdConv(dataRange = dataRange)
+    dfLong, dfRef = self.pdConv(dataRange = dataRange, batches = batches)
 
     # Set per-fit metrics
     dfPF = dfLong.droplevel(['Type','pn']).reset_index().drop_duplicates('Fit').drop(['Param','vary','expr','value','stderr'], axis=1).set_index('Fit')
@@ -95,8 +95,13 @@ def analyseFits(self, dataRange = None):
     AFstack = []
 
     for n in range(dataRange[0], dataRange[1]):
-        AFstack.append(self.data[n]['AFBLM'].expand_dims({'Fit':[n]})) # NOTE [n] here, otherwise gives length not coord
+        try:
+            AFstack.append(self.data[n]['AFBLM'].expand_dims({'Fit':[n]})) # NOTE [n] here, otherwise gives length not coord
                                                                        # http://xarray.pydata.org/en/stable/generated/xarray.DataArray.expand_dims.html
+        except KeyError as e:
+            if self.verbose['sub']:
+                print(f"*** Missing fit key {n}")
+
 
     AFxr = xr.concat(AFstack,'Fit')
     AFxr.attrs['jobLabel'] = "BLM results (all fits)"  # TODO: put some useful info here, date, time, # fits etc.
@@ -565,7 +570,39 @@ def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide',
     """
     Wrapper for ._util.phaseCorrection() (functional form).
 
+    Parameters
+    ----------
+
+    key : str, default = 'fits'
+        Data key for analysis dataframe.
+
+    dataDict : str, default = 'dfLong'
+        Data dict for analysis dataframe.
+        Note default case uses `self.data[key][dataDict]`
+
+    dataOut : str, default = 'dfWide'
+        Output dict key for phase-corrected dataframe.
+
+    dataRef : str, default = 'deRef'
+        Reference dict key for phase.
+        Default case uses `self.data[key][dataRef]`
+        Note this is ONLY USED IF useRef = True is set.
+
+    useRef : bool, default = True
+        Use reference phase from self.data[key][dataRef]?
+        Otherwise ref phase will be set to phasesIn.columns[0] (as per :py:func:`pemtk.fit._util.phaseCorrection`)
+
+    returnFlag : bool, default = True
+        If True return phase-corrected data.
+        If False, set data to self.data[key][dataOut]
+
+    **kwargs
+        Passed to :py:func:`pemtk.fit._util.phaseCorrection`
+
+
     NOTE: this currently only sets phaseCorrected data in wide-form dataset, self.data[key][dataOut]. May want to push to long-form too? (Otherwise this will be lost by self._setWide().)
+
+    TODO: tidy up options here, a bit knotty.
 
     """
 

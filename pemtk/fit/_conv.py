@@ -4,12 +4,14 @@
 
 
 import pandas as pd
+import numpy as np
 from epsproc import multiDimXrToPD
 
 # TODO: should be able to simplify & automate with results.__dict__  - May not be comprehensive?
 # NOW REINDEX BY FIT # & Type, this makes sense for wide <> long conversions
 # For stacked case, set as tuple dictionary index
-def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value', 'stderr', 'vary', 'expr'],  dataRange = None):
+def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value', 'stderr', 'vary', 'expr'],
+            dataRange = None, batches = None):
     """
     Basic conversion for set of fit results > Pandas, long format.
 
@@ -28,6 +30,15 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
     dataRange : optional, list, default = None
         Range of indexes to use, defaults to [0, self.fitInd].
 
+    batches : optional, int, default = None
+        Additional batch of labelling for fits.
+        - If int, label as ceil(fit #)/batches. E.g. batches = 100 will label fits per 100.
+        - If list, use as labels per fit. (NOT YET IMPLEMENTED)
+
+    Todo
+
+    - Additional batching options, inc. by file for multiple read case.
+
     """
 
     # Set default indexes
@@ -44,22 +55,25 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
 
     # Extract relevant data from lmfit params class objects & reindex
     for fitInd in range(dataRange[0], dataRange[1]):
+        try:
+            # Get fit vars
+            fitDict = {k:getattr(self.data[fitInd]['results'], k) for k in fitVars}
 
-        # Get fit vars
-        fitDict = {k:getattr(self.data[fitInd]['results'], k) for k in fitVars}
+            for n,i in enumerate(self.data[fitInd]['results'].params.items()):
+        #     for n,i in enumerate(data.result.params.items()):
+            #     print(n,i)
 
-        for n,i in enumerate(self.data[fitInd]['results'].params.items()):
-    #     for n,i in enumerate(data.result.params.items()):
-        #     print(n,i)
+                pmType = i[0][0]
+                dataDict[(fitInd, pmType, n)] = {j:getattr(i[1],j) for j in paramVars}
+                dataDict[(fitInd, pmType, n)]['Param'] = i[0][2:]  # Use name + type for easier plotting later?
+            #     dataDict[(fitInd, n)]['Type'] = i[0][0]
+            #     dataDict[n]['Fit'] = fitInd  # As column
 
-            pmType = i[0][0]
-            dataDict[(fitInd, pmType, n)] = {j:getattr(i[1],j) for j in paramVars}
-            dataDict[(fitInd, pmType, n)]['Param'] = i[0][2:]  # Use name + type for easier plotting later?
-        #     dataDict[(fitInd, n)]['Type'] = i[0][0]
-        #     dataDict[n]['Fit'] = fitInd  # As column
+                dataDict[(fitInd, pmType, n)].update(fitDict)  # Add per fit items
 
-            dataDict[(fitInd, pmType, n)].update(fitDict)  # Add per fit items
-
+        except KeyError as e:
+            if self.verbose['sub']:
+                print(f"*** Missing fit key {n}")
 
     # Stack to long-format PD
     dfLong = pd.DataFrame(dataDict).T
@@ -70,6 +84,17 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
 
     # Set dType attrib for later.
     dfLong.attrs['dType'] = 'Params Long'
+
+    # Set batches if specified
+    if batches:
+        if isinstance(batches,int):
+            dfLong['batch'] = np.ceil((dfLong.index.get_level_values('Fit')+1)/(batches)).astype(int)  # Quick category for batch of fits
+            # outputIndex.append('batch')
+
+        # TODO: implement some other options here!
+
+        else:
+            print(f'** Batch type {type(batches)} not yet supported, skipping batching in pdConv() routine.')
 
     # Set ref values too, if present
     if hasattr(self,'params'):
@@ -117,7 +142,7 @@ def pdConvRef(self, paramVars = ['value'], outputIndex = ['Fit','Type','pn']):
         except:
             print(f"self.params not set, setting ref values from self.data[{self.subKey}]['matE'] without constraints.")
             self.setMatEFit(paramsCons = {})
-    
+
     refDataDict = {}
 
     for n,i in enumerate(self.params.items()):
