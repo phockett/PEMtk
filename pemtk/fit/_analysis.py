@@ -453,7 +453,7 @@ def paramsCompare(self, params = None, ref = None, phaseCorr = True,
 #************* Classifications & transformations
 
 def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', group = None, bins = None, labels = None,
-                    plotHist = True, propagate = True):
+                    plotHist = True, propagate = True, batch = False):
     """
     Classify fit result sets (DataFrame) based on chisqr or redchi values.
 
@@ -492,6 +492,10 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
     propagate : bool, optional, default = True
         propagate classifications to other data types?
 
+    batch : bool, optional, default = False
+        Dynamically group by batches?
+        TESTING ONLY! Currently ignores bin settings.
+
     """
 
     # Set data subset, functional form - may already have better function elsewhere...?
@@ -514,7 +518,14 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
     if group is None:
         group = dataType + 'Group'
 
-    self.data[key][dataDict][group] = pd.cut(pData, bins = bins, labels = labels)
+    # Classifier
+    if not batch:
+        self.data[key][dataDict][group] = pd.cut(pData, bins = bins, labels = labels)
+
+    # Per batch?
+    else:
+        self.data[key][dataDict][group] = self.data[key][dataDict].groupby('batch').redchi.transform(lambda x: pd.cut(x, bins = np.linspace(x.min(), x.min() * 1.05, 10), labels = list(string.ascii_uppercase[0:len(bins)-1])))
+
     # self.data[key][group] = pd.DataFrame(np.array([bins[0:-1], bins[1:]]).T, index = labels, columns=['Min','Max'])  # Set array of bins
     self.data[key][group] = self.data[key][dataDict].groupby(group).describe()  # Set descriptive array + bins
     self.data[key][group]['Min'] = bins[0:-1]

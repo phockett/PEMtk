@@ -147,6 +147,8 @@ def phaseCorrection(dfWide, dfRef = None, refParam = None, wrapFlag = True, phas
     #     phaseCorr.index = dfOut.index.set_levels(['m','pc'], level = 'Type')  # Set 'pc' Type - NOTE that index keeps all types.
 
     # Rectify phases...? Defined here for -pi:pi range.
+    # For more control consider np.unwrap() and np.mod()
+    # https://numpy.org/doc/stable/reference/generated/numpy.unwrap.html
     if wrapFlag:
         # phaseCorrRec = phaseCorr.apply(lambda x: np.sign(x)*np.mod(np.abs(x),np.pi)) # This will wrap towards zero, should be OK for zero ref phase case.
 
