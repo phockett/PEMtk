@@ -203,7 +203,8 @@ def _setWide(self, indexDims = ['Fit','Type','chisqrGroup','redchiGroup'], value
         # print(f"Setting wide-form data self.[{key}][{dataWide}] from self.[{key}][{dataDict}] (as pivot table).")
         print(f"Index(es) = {iDims}, cols = {vDims}")
 
-    dfWide = dataDict.reset_index().pivot_table(columns = 'Param', values = vDims, index=iDims, aggfunc=np.sum)
+    # dfWide = dataDict.reset_index().pivot_table(columns = 'Param', values = vDims, index=iDims, aggfunc=np.sum) # Agg func? Not required here, otherwise can add extra indexers - although may be PD version specific!
+    dfWide = dataDict.reset_index().pivot_table(columns = 'Param', values = vDims, index=iDims)
     dfWide.attrs['dType'] = 'Params Wide'
 
     if returnFlag:
@@ -494,7 +495,10 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
 
     batch : bool, optional, default = False
         Dynamically group by batches?
-        TESTING ONLY! Currently ignores bin settings.
+        Note different bins settings per batch in this case, where x is the batch dataframe.
+            bins = np.linspace(x.min(), x.min() * bins[0], bins[1])
+        Where default case bins = [1.05, 10]
+
 
     """
 
@@ -503,33 +507,44 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
 
     min = self.fitsSummary['Minima'][dataType]
 
-    # Set binning - case for None or number of bins only
-    defaultBins = 10
-    if (bins is None) or isinstance(bins,int):
-        bins = np.linspace(min - min * 0.05, min * 5, (bins if isinstance(bins,int) else defaultBins))
-    elif len(bins) == 2:
-        bins = np.linspace(bins[0], bins[1], defaultBins)
-    elif len(bins) == 3:
-        bins = np.linspace(bins[0], bins[1], bins[2])
 
-    if labels is None:
-        labels = list(string.ascii_uppercase[0:len(bins)-1])
 
     if group is None:
         group = dataType + 'Group'
 
     # Classifier
     if not batch:
+
+        # Set binning - case for None or number of bins only
+        defaultBins = 10
+        if (bins is None) or isinstance(bins,int):
+            bins = np.linspace(min - min * 0.05, min * 5, (bins if isinstance(bins,int) else defaultBins))
+        elif len(bins) == 2:
+            bins = np.linspace(bins[0], bins[1], defaultBins)
+        elif len(bins) == 3:
+            bins = np.linspace(bins[0], bins[1], bins[2])
+
+        if labels is None:
+            labels = list(string.ascii_uppercase[0:len(bins)-1])
+
         self.data[key][dataDict][group] = pd.cut(pData, bins = bins, labels = labels)
 
     # Per batch?
     else:
-        self.data[key][dataDict][group] = self.data[key][dataDict].groupby('batch').redchi.transform(lambda x: pd.cut(x, bins = np.linspace(x.min(), x.min() * 1.05, 10), labels = list(string.ascii_uppercase[0:len(bins)-1])))
+        defaultBins = 10
+        if (bins is None) or isinstance(bins,int):
+            bins = [1.05, (bins if isinstance(bins,int) else defaultBins)]
+
+        if labels is None:
+            labels = list(string.ascii_uppercase[0:bins[1]-1])
+
+        self.data[key][dataDict][group] = self.data[key][dataDict].groupby('batch').redchi.transform(lambda x: pd.cut(x, bins = np.linspace(x.min(), x.min() * bins[0], bins[1]),
+                                                                                                                    labels = labels))
 
     # self.data[key][group] = pd.DataFrame(np.array([bins[0:-1], bins[1:]]).T, index = labels, columns=['Min','Max'])  # Set array of bins
     self.data[key][group] = self.data[key][dataDict].groupby(group).describe()  # Set descriptive array + bins
-    self.data[key][group]['Min'] = bins[0:-1]
-    self.data[key][group]['Max'] = bins[1:]
+    # self.data[key][group]['Min'] = bins[0:-1]
+    # self.data[key][group]['Max'] = bins[1:]
 
     self.data[key][group].attrs['dType'] = 'Group metrics'
     self.data[key][group].attrs['bins'] = bins
@@ -548,6 +563,10 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
     # TODO: tidy this up! All special cases at the moment.
     #       Esp. dfLong, which currently reruns pd.cut without error checks. Ugh. Horrible.
     #       BETTER APPROACH: just set self.data[key][group] as index or mask into other dataframes? (Or similar - don't need to set in all existing DFs anyway.)
+    #
+    # 19/05/22: improved dfLong/dfWide propagator with specific column addition (see https://stackoverflow.com/questions/14149156/merge-multi-indexed-with-single-indexed-data-frames-in-pandas)\
+    #           Should be able to unify methods with .merge() as in other cases, but ALSO rebuild MultiIndex after merge?
+    #
     if propagate:
         for table in self.data[key].keys():
             if table not in [dataDict, group]:
@@ -556,11 +575,20 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
                         if self.data[key][table].attrs['dType'].endswith('Long'):
                             # Specific update for wide params table.
                             if self.data[key][table].attrs['dType'] == 'Params Long':
-                                self.data[key][table][group] = pd.cut(self.data[key][table][dataType], bins = bins, labels = labels)  # Ugh, just do it again for Params Long, otherwise multiindex gets dropped.
+                                # self.data[key][table][group] = pd.cut(self.data[key][table][dataType], bins = bins, labels = labels)  # Ugh, just do it again for Params Long, otherwise multiindex gets dropped.
+
+                                # Add just new col from existing top-level index
+                                # See https://stackoverflow.com/questions/14149156/merge-multi-indexed-with-single-indexed-data-frames-in-pandas
+                                self.data[key][table][group] = self.data[key][dataDict].loc[self.data[key][table].index.get_level_values('Fit'),group].values
+
                                 self._setWide(key = key, dataDict = table, indexDims = ['Fit','Type',group])
+                                # Note this sets group as an INDEX, which may include null data.
+                                # This is currently expected by other fns, e.g. paramsPlot, but maybe better to push cols instead.
 
                             else:
                                 # Try propagating... OK, although odd results for dfLong & dfWide (due to multiindex?)
+                                # Should work, see https://stackoverflow.com/questions/14149156/merge-multi-indexed-with-single-indexed-data-frames-in-pandas
+                                # Looks like merge is OK for multindex, but need to reset multindex? Or just add new cols directly, as above.
                                 attrs = self.data[key][table].attrs
                                 # self.data[key][table] = self.data[key][table].merge(self.data[key][dataDict][group].reset_index(), on='Fit', how='left')
                                 self.data[key][table] = self.data[key][table].merge(self.data[key][dataDict][group], on='Fit', how='left')
@@ -747,7 +775,7 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = '
 
     # Clean up data to per-fit properties (unless these are required)
     # TODO: check dims instead of assuming here!
-    if (dataType not in ['Type','pn']) and (dataDict is not 'dfPF'):
+    if (dataType not in ['Type','pn']) and (dataDict != 'dfPF'):
         pData = pData.drop_duplicates().droplevel(['Type','pn'])
 
     # Pandas/Matplotlib histogram
