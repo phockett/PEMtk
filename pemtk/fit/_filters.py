@@ -33,8 +33,11 @@ def _subsetFromXS(self, selectors = {}, data = None):
     """Subselect from data using pandas.xs."""
     dataOut = data.copy()
 
+    # Check dims, remove any missing dims
+    selCheck = subselectDims(data,selectors)
+
     # Basic subselection (indexes) - needs dim checking
-    for k,v in selectors.items():
+    for k,v in selCheck.items():
         dataOut = dataOut.xs(v, level = k)
 
     return dataOut
