@@ -454,6 +454,60 @@ def paramsCompare(self, params = None, ref = None, phaseCorr = True,
             display(self.paramsSummaryComp)
 
 
+# Basic param diffs/fidelity compared to ref params
+def paramFidelity(self, key = 'fits', dataDict = 'dfWide', refDict = 'dfRef',
+                    phaseCorr = True, phaseCorrParams = {}):
+
+    """
+    Quick prototype for differences/fidelity per fit parameter set compared to refs.
+
+    Similar to paramsCompare, except per fit, rather than for aggregate data.
+
+    19/05/22 v1
+    """
+
+    # params = None, ref = None, phaseCorr = True,phaseCorrParams = {}
+
+    # Set dataframe - actully, better to use class in this case...
+    # data = self._setData(key, dataDict, thres = None, mask = False)
+
+    # Use existing PC params if set
+    if ('pcParams' in self.data[key][dataDict].attrs.keys()) and not phaseCorrParams:
+        phaseCorrParams = self.data[key][dataDict].attrs['pcParams']
+
+    # TODO - Run phaseCorr too?  Need to decide/check input type for this too?
+    # elif phaseCorr:
+    #     self.phaseCorrection(key = key, dataDict = dataDict, )
+
+    if (refDict in self.data[key].keys()) and (self.data[key][refDict] is not None):
+        dfRef = self.data[key][refDict]  # use this if already set?
+    else:
+        dfRef = self.pdConvRef()  # Set ref from self.params, will also be set if missing.
+        self.data[key][refDict] = dfRef
+
+    if phaseCorr:
+        # Set defaults & update with any passed args
+        phaseCorrArgs = {'dataDict':'dfRef', 'dataOut':'dfRefPC', 'useRef':False}
+        phaseCorrArgs.update(phaseCorrParams)
+
+        # Run phaseCorrection()
+        self.phaseCorrection(**phaseCorrArgs)
+        dfRef = self.data['fits']['dfRefPC']
+
+    #*** Differences
+
+    # Set dataframe - actully, better to use class in this case...
+    data = self._setData(key, dataDict, thres = None, mask = False)
+
+    diffs = data.sub(dfRef.loc['ref'], axis=0, level='Type')
+    diffSum = diffs.pipe(np.abs).sum(axis=1).to_frame()  # Sum absolute diffs.
+    diffSum.columns = ['diff']
+
+    # Set outputs
+    self.data['fits']['diffs'] = diffs
+    self.data['fits']['diffSum'] = diffSum
+
+
 #************* Classifications & transformations
 
 def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', group = None, bins = None, labels = None,
@@ -651,6 +705,7 @@ def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide',
     TODO: tidy up options here, a bit knotty.
 
     """
+    pcParams = locals()  # Log inputs for later.
 
     # Work with copy and set phase corr data to this...
     dataIn = self.data[key][dataDict].copy()
@@ -679,6 +734,7 @@ def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide',
     dfOut = pd.concat([dfOut, dataInWide]).sort_index()  # NOTE - this seems to mess up with Multiindex IF dim ordering is different. UGH. HORRIBLE.
                                             # Update: Dim ordering should now be enforced in self._setWide() for dataInWide.
     dfOut.attrs['dType'] = 'Params Wide'
+    dfOut.attrs['pcParams'] = pcParams   # Get args
 
     # Set renormalised magnitudes?
     if renorm:
@@ -794,7 +850,7 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = '
         pData.hist(bins=bins)
 
     # Holoviews scatter + histograms
-    elif backend is 'hv':
+    elif backend == 'hv':
         # Set bins, treat int bins as separate parameter num_bins for HV.
         # For HV: http://holoviews.org/reference_manual/holoviews.operation.html#holoviews.operation.histogram
         binsHV = (bins if not isinstance(bins,int) else None)
