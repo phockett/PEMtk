@@ -81,6 +81,7 @@ class pemtkFit(dataClass):
     from ._plotters import BLMfitPlot, lmPlotFit, BLMsetPlot
     # from ._stats import setPoissWeights
     from ._sym import symCheck
+    from ._aggUtil import aggToXR, setAggMatE
     from ._util import setClassArgs, _setDefaultFits
 
     # from pemtk.util import hvPlotters  # Imports full module, include setup routines.
