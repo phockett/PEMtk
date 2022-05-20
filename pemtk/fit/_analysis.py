@@ -156,7 +156,7 @@ def _setData(self, key, dataDict, dataType = None, thres = None, mask = True):
     return pData
 
 
-def _setWide(self, indexDims = ['Fit','Type','chisqrGroup','redchiGroup'], valueDims = ['value'],
+def _setWide(self, indexDims = ['Fit','Type','chisqrGroup','redchiGroup','batch'], valueDims = ['value'],
                 key = 'fits', dataDict = 'dfLong', dataWide = 'dfWide',
                 dataIn = None, returnFlag = False):
     """
@@ -581,7 +581,7 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
                                 # See https://stackoverflow.com/questions/14149156/merge-multi-indexed-with-single-indexed-data-frames-in-pandas
                                 self.data[key][table][group] = self.data[key][dataDict].loc[self.data[key][table].index.get_level_values('Fit'),group].values
 
-                                self._setWide(key = key, dataDict = table, indexDims = ['Fit','Type',group])
+                                self._setWide(key = key, dataDict = table, indexDims = ['Fit','Type','batch',group])  # Note keep 'batch' if exists (checked in _setWide())
                                 # Note this sets group as an INDEX, which may include null data.
                                 # This is currently expected by other fns, e.g. paramsPlot, but maybe better to push cols instead.
 
@@ -942,12 +942,13 @@ def corrPlot(self, key = 'fits', dataDict = 'dfWide', hue = 'redchiGroup', hRoun
 
 
 
-def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redchiGroup',
+def paramPlot(self, selectors = {'Type':'m'},
+            # dataType = 'm', level = 'Type', sel = None, selLevel = 'redchiGroup',
             hue = None, hRound = 7, x='Param', y='value',
             key = 'fits', dataDict = 'dfWide', dataPF = 'dfPF', plotDict = 'plots',
             # thres = None, mask = True,
             hvType = None, remap = None,
-            backend = 'sns', returnFlag = False):
+            backend = 'sns', returnFlag = False, **kwargs):
     """
     Basic scatter-plot of parameter values by name/type.
 
@@ -972,6 +973,8 @@ def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redc
 
     For usage notes see https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_multiproc_class_analysis_141121-tidy.html
 
+    19/05/22: updated for multiple XS from selectors, now passed as dictionary with items {level:value}
+
     """
 
     # ADDTIONAL NOTES from PKG version testing.
@@ -994,17 +997,32 @@ def paramPlot(self, dataType = 'm', level = 'Type', sel = None, selLevel = 'redc
     # TODO: update selectors as looped dict specs?
     # SEE _util._subsetFromXS
     # Subselect with XS
-    if dataType is not None:
-        pData = pData.xs(dataType, level=level)
+    # if dataType is not None:
+    #     pData = pData.xs(dataType, level=level)
+    #
+    # # Further subselection if specified
+    # if sel is not None:
+    #     pData = pData.xs(sel, level = selLevel)  # , drop_level=False)
 
-    # Further subselection if specified
-    if sel is not None:
-        pData = pData.xs(sel, level = selLevel)  # , drop_level=False)
+    # 19/05/22: updated for multiple XS
+    # For back-compatibility check for previous style args.
+    # # dataType = 'm', level = 'Type', sel = None, selLevel = 'redchiGroup',
+    if 'dataType' in kwargs.keys():
+        selectors = {kwargs['level']:kwargs['dataType']}
+
+        if 'sel' in kwargs.keys():
+            selectors[kwargs['selLevel']] = kwargs['sel']
+
+        print(f'Set selectors = {selectors} from keyword args, pass dict of selectors[level] = key, for more flexibility')
+
+    # Multiple XS from selectors dict.
+    pData = self._subsetFromXS(selectors = selectors, data = pData)  # Allow XS over multiple dims.
 
     # Melt to long form for sns.catplot functionality
     # TODO: check & fix any non-consistent dim handling here!
     if hue is None:
-        hue = selLevel
+        # hue = selLevel
+        hue = pData.index.names[-1]  # Default to last index for hue if not set
 
     # hDims = subselectDims(pData, refDims = hue)
     # if hDims:
