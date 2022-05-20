@@ -252,7 +252,7 @@ def fitsReport(self, key = 'fits', dataDict = 'dfPF', thres = None, mask = True)
 
 
 # Test final param determination/report by group
-def paramsReport(self, key = 'fits', dataDict = 'dfWide', inds = {}, aggList = ['min', 'mean', 'median', 'max', 'std', 'var']):
+def paramsReport(self, key = 'fits', dataDict = 'dfWide', groups = 'Type', inds = {}, aggList = ['min', 'mean', 'median', 'max', 'std', 'var']):
     """
     Generate parameter report/metrics, defaults to self.data['fits']['dfWide'].
     Results are printed if self.verbose, and also set to self.paramsSummary.
@@ -265,6 +265,9 @@ def paramsReport(self, key = 'fits', dataDict = 'dfWide', inds = {}, aggList = [
     dataDict : str, optional, default = 'dfWide'
         Dataset to use, from self.data[key].
         Default case is per-fit metrics.
+
+    groups : str or list of strings, optional, default = 'Type'
+        Additional groupings to use for output (pd.groupby).
 
     inds : dict, optional, default = {}
         Set of indexs to subselect from, as dictionary items.
@@ -294,10 +297,10 @@ def paramsReport(self, key = 'fits', dataDict = 'dfWide', inds = {}, aggList = [
     self.paramsSummary['count'] = subset.count()
 
     # Default decribe()
-    self.paramsSummary['desc'] = subset.groupby('Type').describe().T
+    self.paramsSummary['desc'] = subset.groupby(groups).describe().T
 
     # Custom agg
-    self.paramsSummary['agg'] = subset.groupby('Type').agg(aggList).T
+    self.paramsSummary['agg'] = subset.groupby(groups).agg(aggList).T
     self.paramsSummary['agg'].index.rename(['Param','Agg'], inplace=True)
 
     if self.verbose['main']:
