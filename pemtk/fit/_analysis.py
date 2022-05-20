@@ -28,7 +28,7 @@ from epsproc import matEleSelector, multiDimXrToPD
 from epsproc.util.misc import subselectDims
 
 from ._util import phaseCorrection as phaseCorrFunc
-from ._util import addColLevel, renameParams
+from ._util import addColLevel, renameParams, renormMagnitudes
 
 # #*** Plot setup - NOW MOVED TO .util.hvPlotters.py
 # NOTE POSSIBLE SCOPE ISSUES HERE - currently resolved by importing to self.hv, but may not be best practice.
@@ -608,7 +608,8 @@ def classifyFits(self, key = 'fits', dataDict = 'dfPF', dataType = 'redchi', gro
                         print(f"Couldn't set {group} for data frame {table}. Error {type(e)}: {e.args}.")
 
 
-def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide', dataRef = 'dfRef', useRef = True, returnFlag = False, **kwargs):
+def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide', renorm = True,
+                    dataRef = 'dfRef', useRef = True, returnFlag = False, **kwargs):
     """
     Wrapper for ._util.phaseCorrection() (functional form).
 
@@ -624,6 +625,9 @@ def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide',
 
     dataOut : str, default = 'dfWide'
         Output dict key for phase-corrected dataframe.
+
+    renorm : bool, default = True
+        Also set renormalised magnitudes if True (via :py:func:`pemtk.fit._util.renormMagnitudes`)
 
     dataRef : str, default = 'deRef'
         Reference dict key for phase.
@@ -675,6 +679,10 @@ def phaseCorrection(self, key = 'fits', dataDict = 'dfLong', dataOut = 'dfWide',
     dfOut = pd.concat([dfOut, dataInWide]).sort_index()  # NOTE - this seems to mess up with Multiindex IF dim ordering is different. UGH. HORRIBLE.
                                             # Update: Dim ordering should now be enforced in self._setWide() for dataInWide.
     dfOut.attrs['dType'] = 'Params Wide'
+
+    # Set renormalised magnitudes?
+    if renorm:
+        dfOut = renormMagnitudes(dfOut)
 
     if self.__notebook__:
         display(dfOut)

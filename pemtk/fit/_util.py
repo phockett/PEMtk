@@ -99,6 +99,30 @@ def renameParams(data, mapDict, mapType = 'col'):
     return test
 
 
+# Basic renorm function, cf. _util.phaseCorrection()
+def renormMagnitudes(dfWide):
+    """
+    Basic renormalisation of magnitudes so sum(mags**2) = 1
+
+    Prototype from test code:
+
+    - Assumes full Pandas tabulated wide-form dataset as input.
+    - Renormed values appended to input dataframe, as Type=n
+
+    TODO: implement dim preservation? Currently handled by calling fn., and assumes Type=m is present in index.
+
+    """
+
+    # Renorm magnitudes?
+    # Note this currently only runs from dfWide data
+    mSq = (dfWide**2).sum(axis=1)  # Set norm const as sum of squares (all Types)
+    renormTest = (dfWide.xs('m',level='Type',drop_level=False)).divide(np.sqrt(mSq.xs('m',level='Type',drop_level=False)), axis=0)  # Divide out
+    # Restack frames
+    dfRenorm = pd.concat([dfWide, renormTest.rename({'m':'n'})]).sort_values(by=['Fit','Type'])  # Sort by Fits? Otherwise new vals appended to end
+
+    return dfRenorm
+
+
 
 # TODO: revise and wrap this properly!
 # Should push corrected phase back to original table as new dim?
