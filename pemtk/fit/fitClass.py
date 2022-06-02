@@ -73,15 +73,17 @@ class pemtkFit(dataClass):
     Class prototype for pemtkFit class. Dev version builds on dataClass, and adds some basic subselection & fitting capabilities.
     """
 
+    from ._aggUtil import aggToXR, setAggMatE
     from ._analysis import (analyseFits, fitHist, fitsReport, classifyFits, corrPlot, paramPlot, paramsReport, paramsCompare, paramFidelity,
                             phaseCorrection, _mergePFLong, _setData, _setWide)  #, scopeTest
     from ._conv import pdConv, pdConvRef, pdConvSetFit
     from ._filters import thresFits, _subsetFromXS, getFitInds
+    from ._io import writeFitData, _pickleData, loadData
     from ._parallel import multiFit
     from ._plotters import BLMfitPlot, lmPlotFit, BLMsetPlot
     # from ._stats import setPoissWeights
     from ._sym import symCheck
-    from ._aggUtil import aggToXR, setAggMatE
+
     from ._util import setClassArgs, _setDefaultFits
 
     # from pemtk.util import hvPlotters  # Imports full module, include setup routines.
