@@ -78,7 +78,7 @@ class pemtkFit(dataClass):
                             phaseCorrection, _mergePFLong, _setData, _setWide)  #, scopeTest
     from ._conv import pdConv, pdConvRef, pdConvSetFit
     from ._filters import thresFits, _subsetFromXS, getFitInds
-    from ._io import writeFitData, _pickleData, loadData
+    from ._io import aggToHDF5, writeFitData, _pickleData, loadData, _writePDData, _writeXRData
     from ._parallel import multiFit
     from ._plotters import BLMfitPlot, lmPlotFit, BLMsetPlot
     # from ._stats import setPoissWeights

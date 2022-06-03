@@ -24,6 +24,8 @@ from datetime import datetime as dt
 
 import numpy as np
 
+from epsproc import multiDimXrToPD, writeXarray
+
 # dataPath = Path(r'/home/jovyan/work/pemtk_fitting_runs_April2022/ioTests')
 # dataPath = Path(r'/home/jovyan/ioTestsLocal/data_dumps')  # FF Docker
 
@@ -68,7 +70,7 @@ def setTimeStampedFileName(outStem = None, n = None, ext = 'pickle', timeString 
     return fName
 
 
-def writeFitData(self, dataPath = None, fName = None, outStem = None, n=None, fType = 'pickle', ext = None):
+def writeFitData(self, dataPath = None, fName = None, outStem = None, n=None, fType = 'pickle', ext = None, **kwargs):
     """
     Dump fit data with various backends.
 
@@ -96,11 +98,61 @@ def writeFitData(self, dataPath = None, fName = None, outStem = None, n=None, fT
         # pickleData(self,fOut)  # NOTE - here only include self for testing!
         self._pickleData(fOut)
 
+    elif fType == 'pdHDF':
+        # _writePDData(self,fOut,**kwargs)  # NOTE - here only include self for testing!
+        self._writePDData(fOut,**kwargs)
+
+    elif fType == 'nc':
+        # _writeXRData(self,fOut,**kwargs)  # NOTE - here only include self for testing!
+        self._writeXRData(fOut,**kwargs)
+
 #     if self.verbose['main']:
 #         print(f'Dumped data to {fOut} with pickle.')
 
     return fOut
 
+
+def aggToHDF5(self, dataKey = 'fits', dataTypes = ['dfLong','AFxr'], fType = 'pdHDF',
+              outStem=None, multiFile = False, **kwargs):  #fOut, dataKey = 'fits', dataType='dfLong'):   # dataPath = None, fName = None, outStem = None):  # Assume fOut handled by wrapper
+    """
+    Save aggregate fit data to HDF5.
+
+    Write self.data['fits']['dfLong'] and self.data['fits']['AFxr'] to file.
+
+    Wraps self.writeFitData for processed data types.
+
+    """
+
+    if outStem is None:
+        outStem = ''
+    else:
+        outStem = outStem + '_'
+
+    if dataKey not in self.data.keys():
+        print(f"*** Skipping data save, self.data[{dataKey}] missing.")
+
+        return 0
+
+    if 'dfLong' not in self.data[dataKey].keys():
+        self.analyseFits()
+
+    # Save dfLong
+    # self.data['fits']['dfLong'].to_
+    # self.writeFitData(self, dataPath = dataPath, outStem = 'pd_dump_test', fType = 'pdHDF')
+
+    # Write to file using writeFitData wrapper.
+    # Include outStem=dataType to avoid accidental datastamp file overwrite, or could support passed outStem?
+    # UPDATE - now implemented above, set multiFile=True to use
+    for dataType in dataTypes:
+        # self.writeFitData(self, dataKey = dataKey, dataType = dataType, fType = fType, **kwargs)
+        outStemItem = outStem
+        if multiFile:
+            outStemItem = outStem+dataType
+
+        self.writeFitData(dataKey = dataKey, dataType = dataType, outStem = outStemItem, fType = fType, **kwargs)
+
+
+#************* FILE WRITERS
 
 # v1
 # def pickleData(self, dataPath = None, fName = None, outStem = None, n=None):
@@ -143,6 +195,69 @@ def _pickleData(self, fOut):
 
     if self.verbose['main']:
         print(f'Dumped self.data to {fOut} with pickle.')
+
+def _writePDData(self, fOut, dataKey = 'fits', dataType='dfLong'):
+    """
+    Dump item self.data[dataKey][dataType] to file using Pandas.to_hdf().
+
+    This works well for Pandas Dataframes, including complex data.
+    Also works for Xarray (via Pandas conversion routine), but may lose attribs.
+
+    Default case will append to file if it exists, so multiple calls will add items (nodes/groups) to hdf store.
+    (Note read in via Pandas requires per key reading in this case.)
+
+    See https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_hdf.html
+
+    And https://pandas.pydata.org/docs/user_guide/io.html#hdf5-pytables
+
+    """
+
+    item = self.data[dataKey][dataType]
+
+    if not isinstance(item, pd.DataFrame):
+        try:
+            item, _ = multiDimXrToPD(item, colDims = 'Fit', squeeze = False)
+        except:
+            print(f"*** Couldn't convert self.data[{dataKey}][{dataType}] to Pandas, skipping file writing")
+            return 0
+
+    item.to_hdf(fOut, dataType)   # Write to file with named group dataType
+
+    if self.verbose['main']:
+        print(f'Dumped self.data[{dataKey}][{dataType}] to {fOut} with Pandas .to_hdf() routine.')
+
+
+
+def _writeXRData(self, fOut, dataKey = 'fits', dataType='AFxr', **kwargs):
+    """
+    Dump item self.data[dataKey][dataType] to file using ep.writeXarray, built on Xarray.to_netcdf()
+
+    This works well for basic Xarray structures.
+
+    For complex data need to either set engine='h5netcdf', forceComplex=True (currently default for ep.writeXarray), or split to Re + Im groups.
+
+    Attributes may also need to be sanitised for netCDF writer.
+
+    See :py:func:`epsproc.IO.writeXarray` and https://docs.xarray.dev/en/latest/user-guide/io.html
+
+
+    """
+
+    item = self.data[dataKey][dataType].copy()
+    # item = item.drop('Euler')   # FOR TESTING ONLY!
+
+    # writeXarray(item, fileName = fOut.name, filePath = fOut.parent, **kwargs)
+
+    try:
+        writeXarray(item, fileName = fOut.name, filePath = fOut.parent, **kwargs)
+
+    except Exception as e:
+        print(f"*** Failed to write self.data[{dataKey}][{dataType}] to file with ep.writeXarray().")
+        print(e)
+
+
+
+#************ LOAD FILES
 
 
 def loadData(self, fList, dataPath = None, batch = None):
