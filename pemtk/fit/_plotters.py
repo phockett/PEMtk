@@ -157,3 +157,43 @@ def BLMsetPlot(self, key = 'fits', dataDict = 'AFxr', agg = True, ref = True,
     # Code from showPlot()
     if self.__notebook__:
         display(hvPlot)  # If notebook, use display to push plot.
+
+
+#************* Figure IO
+
+# from datetime import datetime as dt
+# timeString = dt.now()
+
+def hvSave(self, key = 'plots', pTypes = None, outStem = None, outPath = None, outTypes = ['png', 'html']):
+    """
+    Wrapper for quick plot save routine from data dict.
+
+    If data is a HV object, set key=None to save directly
+    Update: removed this, since it's not very clear or useful (missing defaults).
+
+    """
+
+    # Set stem for output file names if not passed
+    if outStem is None:
+        outStem = self.job['fileIn'].stem
+
+    # Default path
+    if outPath is None:
+        outPath = self.job['fileBase']
+
+    # Force list
+    if type(pTypes) is not list:
+        pTypes = [pTypes]
+
+    # Loop over pTypes and outTypes and write to file
+#     if key is not None:
+    for item in pTypes:
+        for out in outTypes:
+            # hvPlotters.hv.save(data.data[key][item], Path(outPath, f'{outStem}_{item}_{timeString.strftime("%d%m%y")}'), fmt=out)
+            self.hv.save(self.data[key][item], Path(outPath, self.setTimeStampedFileName(f'{outStem}_{item}',ext=out)), fmt=out)
+
+#     else:
+#         for out in outTypes:
+#             hvPlotters.hv.save(data, Path(outPath, f'{outStem}_{item}'), fmt=out)
+
+    return True
