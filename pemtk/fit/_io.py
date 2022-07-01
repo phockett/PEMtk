@@ -334,6 +334,7 @@ def loadFitData(self, fList = None, dataPath = None, batch = None, **kwargs):
 
 
     fOffset = 0
+    self.files['batches'] = {}
     for ind,fileIn in enumerate(fList):
     # for ind,fileIn in enumerate(fListChecked):
 #         data.verbose['sub'] = 1
@@ -365,6 +366,7 @@ def loadFitData(self, fList = None, dataPath = None, batch = None, **kwargs):
         # Stack by ints only, but preserve other data per file
         self.data.update({((ind,k) if not isinstance(k,int) else k+fOffset):v for k,v in dataIn.items()})
 
+        fStart = fOffset
         fOffset = fOffset + fInd + 1 # Update total N
 
         # If fits are batched, fix steps to batch size
@@ -377,5 +379,6 @@ def loadFitData(self, fList = None, dataPath = None, batch = None, **kwargs):
         # Log file input
         self.files['filesIn'].append(fileIn)
         self.files['dataPaths'].append(fileIn.parent)
+        self.files['batches'][ind] = {'file': fileIn, 'fits':fInd, 'fitInds':[fStart, fOffset]}
 
     self.fitInd = fOffset
