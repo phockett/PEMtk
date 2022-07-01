@@ -78,7 +78,7 @@ class pemtkFit(dataClass):
                             phaseCorrection, _mergePFLong, _setData, _setWide)  #, scopeTest
     from ._conv import pdConv, pdConvRef, pdConvSetFit
     from ._filters import thresFits, _subsetFromXS, getFitInds
-    from ._io import aggToHDF5, writeFitData, _pickleData, loadData, _writePDData, _writeXRData
+    from ._io import processedToHDF5, writeFitData, loadFitData, _pickleData, _writePDData, _writeXRData, setTimeStampedFileName
     from ._parallel import multiFit
     from ._plotters import BLMfitPlot, lmPlotFit, BLMsetPlot
     # from ._stats import setPoissWeights
@@ -112,6 +112,10 @@ class pemtkFit(dataClass):
         self.basis = None
         self.fitData = None
         self.fitInd = 0
+
+        # Set dict for file handling
+        # Currently just a log - appends to list on file IO.
+        self.files = {'filesIn':[], 'filesOut':[], 'dataPaths':[], 'filesOutFailed':[]}
 
         # Quick hack for optional Holoviews import - may not be best way to do this?
         # Issue without binding to self is scope of sub-module/imported methods (e.g. from _analysis.py).

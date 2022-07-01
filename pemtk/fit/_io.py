@@ -23,15 +23,16 @@ from pathlib import Path
 from datetime import datetime as dt
 
 import numpy as np
+import pandas as pd
 
-from epsproc import multiDimXrToPD, writeXarray
+from epsproc import multiDimXrToPD, writeXarray, getFiles
 
 # dataPath = Path(r'/home/jovyan/work/pemtk_fitting_runs_April2022/ioTests')
 # dataPath = Path(r'/home/jovyan/ioTestsLocal/data_dumps')  # FF Docker
 
 # import os
 
-def setTimeStampedFileName(outStem = None, n = None, ext = 'pickle', timeString = None):
+def setTimeStampedFileName(self,outStem = None, n = None, ext = 'pickle', timeString = None, timeFormat = "%d%m%y_%H-%M-%S"):
     """
     Set unique filename as f'{outStem}_n{n}_{timeString.strftime("%d%m%y_%H-%M-%S")}.{ext}'
 
@@ -53,6 +54,10 @@ def setTimeStampedFileName(outStem = None, n = None, ext = 'pickle', timeString 
         Timestamp for the file.
         If None, current time will be used.
 
+    timeFormat : Datatime format string, optional, default = "%d%m%y_%H-%M-%S"
+
+    TODO: additional formatting options, data[key][item] naming option?
+
     """
 
     if outStem is None:
@@ -63,9 +68,12 @@ def setTimeStampedFileName(outStem = None, n = None, ext = 'pickle', timeString 
 
     # Use n for multiple fit checkpointing - may want a more sophisticated routine for this however.
     if n is not None:
-        fName = f'{outStem}_n{n}_{timeString.strftime("%d%m%y_%H-%M-%S")}.{ext}'
+        fName = f'{outStem}_n{n}_{timeString.strftime(timeFormat)}'
     else:
-        fName = f'{outStem}_{timeString.strftime("%d%m%y_%H-%M-%S")}.{ext}'
+        fName = f'{outStem}_{timeString.strftime(timeFormat)}'
+
+    if ext is not None:
+        fName = fName + f'.{ext}'
 
     return fName
 
@@ -89,37 +97,51 @@ def writeFitData(self, dataPath = None, fName = None, outStem = None, n=None, fT
         ext = fType
 
     if fName is None:
-        fName = setTimeStampedFileName(outStem = outStem, n = n, ext = ext)
+        fName = self.setTimeStampedFileName(outStem = outStem, n = n, ext = ext)
 
 
     fOut = Path(dataPath,fName)
 
     if fType == 'pickle':
         # pickleData(self,fOut)  # NOTE - here only include self for testing!
-        self._pickleData(fOut)
+        sFlag = self._pickleData(fOut)
 
     elif fType == 'pdHDF':
         # _writePDData(self,fOut,**kwargs)  # NOTE - here only include self for testing!
-        self._writePDData(fOut,**kwargs)
+        sFlag = self._writePDData(fOut,**kwargs)
 
-    elif fType == 'nc':
+    # elif fType == 'nc':
+    # 30/06/22: updated handling on ePSproc.IO.writeXarray, so assume this as default case.
+    else:
         # _writeXRData(self,fOut,**kwargs)  # NOTE - here only include self for testing!
-        self._writeXRData(fOut,**kwargs)
+        sFlag = self._writeXRData(fOut,**kwargs)
 
-#     if self.verbose['main']:
-#         print(f'Dumped data to {fOut} with pickle.')
+    if self.verbose['main']:
+        if sFlag:
+            print(f'Dumped data to {fOut} with {fType}.')
+        else:
+            print(f'Failed to write data to {fOut} with {fType}.')
+
+    # Log file and return
+    self.files['dataPaths'].append(dataPath)
+    if sFlag:
+        self.files['filesOut'].append(fOut)
+    else:
+        self.files['filesOutFailed'].append(fOut)
 
     return fOut
 
 
-def aggToHDF5(self, dataKey = 'fits', dataTypes = ['dfLong','AFxr'], fType = 'pdHDF',
+def processedToHDF5(self, dataKey = 'fits', dataTypes = ['dfLong','AFxr'], fType = 'pdHDF',
               outStem=None, multiFile = False, **kwargs):  #fOut, dataKey = 'fits', dataType='dfLong'):   # dataPath = None, fName = None, outStem = None):  # Assume fOut handled by wrapper
     """
-    Save aggregate fit data to HDF5.
+    Save processed fit data to HDF5.
 
     Write self.data['fits']['dfLong'] and self.data['fits']['AFxr'] to file.
 
     Wraps self.writeFitData for processed data types.
+
+    TODO: generalise to arb set of dataTypes and add checks.
 
     """
 
@@ -146,7 +168,7 @@ def aggToHDF5(self, dataKey = 'fits', dataTypes = ['dfLong','AFxr'], fType = 'pd
     for dataType in dataTypes:
         # self.writeFitData(self, dataKey = dataKey, dataType = dataType, fType = fType, **kwargs)
         outStemItem = outStem
-        if multiFile:
+        if not multiFile:
             outStemItem = outStem+dataType
 
         self.writeFitData(dataKey = dataKey, dataType = dataType, outStem = outStemItem, fType = fType, **kwargs)
@@ -196,6 +218,9 @@ def _pickleData(self, fOut):
     if self.verbose['main']:
         print(f'Dumped self.data to {fOut} with pickle.')
 
+    return 1
+
+
 def _writePDData(self, fOut, dataKey = 'fits', dataType='dfLong'):
     """
     Dump item self.data[dataKey][dataType] to file using Pandas.to_hdf().
@@ -226,6 +251,8 @@ def _writePDData(self, fOut, dataKey = 'fits', dataType='dfLong'):
     if self.verbose['main']:
         print(f'Dumped self.data[{dataKey}][{dataType}] to {fOut} with Pandas .to_hdf() routine.')
 
+    return 1
+
 
 
 def _writeXRData(self, fOut, dataKey = 'fits', dataType='AFxr', **kwargs):
@@ -234,12 +261,19 @@ def _writeXRData(self, fOut, dataKey = 'fits', dataType='AFxr', **kwargs):
 
     This works well for basic Xarray structures.
 
-    For complex data need to either set engine='h5netcdf', forceComplex=True (currently default for ep.writeXarray), or split to Re + Im groups.
+    For complex data to netCDF need to either set engine='h5netcdf', forceComplex=True, or split to Re + Im groups (currently default for ep.writeXarray).
+    For HDF5 complex data is supported.
 
     Attributes may also need to be sanitised for netCDF writer.
 
-    See :py:func:`epsproc.IO.writeXarray` and https://docs.xarray.dev/en/latest/user-guide/io.html
+    See :py:func:`epsproc.IO.writeXarray`__ and https://docs.xarray.dev/en/latest/user-guide/io.html
 
+    For docs on ePSproc Xarray IO (June 2022): https://epsproc.readthedocs.io/en/dev/dataStructures/ePSproc_dataStructures_IO_demo_280622.html
+
+    Currently supported methods/engines:
+
+    - netCDF via 'h5netcdf', 'scipy' or 'netcdf4' engines (using Xarray.to_netcdf())
+    - 'hdf5' via h5py (via dictionary conversion routines, see :py:func:`epsproc.ioBackends.hdf5IO.writeXarrayToHDF5`__)
 
     """
 
@@ -250,35 +284,66 @@ def _writeXRData(self, fOut, dataKey = 'fits', dataType='AFxr', **kwargs):
 
     try:
         writeXarray(item, fileName = fOut.name, filePath = fOut.parent, **kwargs)
+        return 1
 
     except Exception as e:
-        print(f"*** Failed to write self.data[{dataKey}][{dataType}] to file with ep.writeXarray().")
-        print(e)
+        print(f"\n*** Failed to write self.data[{dataKey}][{dataType}] to file {fOut} with ep.writeXarray().")
+        print(f"ep.writeXarray() caught exception: {e}")
+        print(f'(Partial write may have completed.)')
+        return 0
 
 
 
 #************ LOAD FILES
 
+def getFilesList(fileIn = None, fileBase = None, fType = 'pickle', verbose = False):
+    """Thin wrapper for epsproc.IO.getFiles - get file list from dir (no subdirs) by type"""
 
-def loadData(self, fList, dataPath = None, batch = None):
+    return getFiles(fileIn = fileIn, fileBase = fileBase, fType = fType, verbose = verbose)
+
+
+def loadFitData(self, fList = None, dataPath = None, batch = None, **kwargs):
     """
     Load data dumps from a file or set of files (and stack).
 
-    """
+    Currently Pickle files only.
 
-    if not isinstance(fList,list):
-        fList = [fList]
+    See writeFitData for other options/file types - to be added here too.
+
+    """
 
     if dataPath is None:
         # dataPath = os.getcwd()  # OR
         dataPath = Path().absolute()
 
+    if fList is None:
+        # Run dir scan
+        fList = getFilesList(fileBase = dataPath, fType = 'pickle')
+
+    else:
+        if not isinstance(fList,list):
+            fList = [fList]
+
+        # Check passed list of files for validity
+        fList = getFilesList(fileIn = fList, fileBase = dataPath)
+
+    # Check files exist - either on full path or cwd.
+    # Already included in main loop below!
+    # TODO: add error message here?
+    # UPDATE: now also done above via getFilesList() functionality.
+
+
     fOffset = 0
     for ind,fileIn in enumerate(fList):
+    # for ind,fileIn in enumerate(fListChecked):
 #         data.verbose['sub'] = 1
 
+        # Now duplicated above, via getFilesList(), should remove here?
+        # Except above returns strings, not Paths.
         if not Path(fileIn).exists():
             fileIn = Path(dataPath,fileIn)  # Assume full path missing if file doesn't exist?
+        else:
+            fileIn = Path(fileIn)  # Force Path object
 
         with open(fileIn, 'rb') as handle:
             dataIn = pickle.load(handle)
@@ -308,5 +373,9 @@ def loadData(self, fList, dataPath = None, batch = None):
         if batch is not None:
             if np.mod(fOffset,batch):
                 fOffset = fOffset + (batch - np.mod(fOffset,batch))
+
+        # Log file input
+        self.files['filesIn'].append(fileIn)
+        self.files['dataPaths'].append(fileIn.parent)
 
     self.fitInd = fOffset
