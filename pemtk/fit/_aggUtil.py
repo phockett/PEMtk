@@ -32,7 +32,7 @@ def setAggCompData(data, keys = {'comp':['m','p'],'compC':['n','pc']}):
     return data
 
 
-def setAggMatE(self, simpleForm = False):
+def setAggMatE(self, keys = {'comp':['m','p']}, simpleForm = False):
     """Set aggregate results to matE format"""
 
     # Final results & reformat
@@ -41,7 +41,7 @@ def setAggMatE(self, simpleForm = False):
     # Replace index...
     meanMatE.index = self.lmmu['Index']
 
-    meanMatE = setAggCompData(meanMatE)  # Set complex forms
+    meanMatE = setAggCompData(meanMatE, keys)  # Set complex forms
 
     if simpleForm:
         # Relabel, paper format - see ._util.lmmuListStrReformat()
@@ -57,10 +57,15 @@ def setAggMatE(self, simpleForm = False):
     self.data['agg']['matEpd'] = meanMatE
 
 
-def aggToXR(self, key = 'agg', cols=['comp','compC'], EkeList = [1.1], dType = 'matE',
-               refKey = None, returnType = 'ds'):
+def aggToXR(self, key = 'agg', cols = {'comp':['m','p'],'compC':['n','pc']},   # cols=['comp','compC'],
+            EkeList = [1.1], dType = 'matE',
+            refKey = None, returnType = 'ds', simpleForm = False):
     """
     Pull columns from PD dataframe & stack to XR dataset.
+
+
+    cols : dict, optional, default = {'comp':['m','p'],'compC':['n','pc']}
+        Dict of keys for output items/columns, and [mag,phase] columns to convert.
 
 
     TODO:
@@ -74,13 +79,13 @@ def aggToXR(self, key = 'agg', cols=['comp','compC'], EkeList = [1.1], dType = '
 
     # Get mean matE if not set
     if not f'{dType}pd' in self.data[key].keys():
-        self.setAggMatE()
+        self.setAggMatE(keys = cols, simpleForm = simpleForm)
         # setAggMatE(data)
 #         setAggCompData
 
 
     dataSet = {}
-    for col in cols:
+    for col in cols.keys():
 #         print(col)
         # Basic XR array
         xrRaw = xr.DataArray(self.data[key][f'{dType}pd'][[col]]).unstack()
