@@ -112,13 +112,18 @@ def renormMagnitudes(dfWide):
     TODO: implement dim preservation? Currently handled by calling fn., and assumes Type=m is present in index.
 
     """
-
     # Renorm magnitudes?
+    attrsIn = dfWide.attrs.copy()
+
     # Note this currently only runs from dfWide data
     mSq = (dfWide**2).sum(axis=1)  # Set norm const as sum of squares (all Types)
     renormTest = (dfWide.xs('m',level='Type',drop_level=False)).divide(np.sqrt(mSq.xs('m',level='Type',drop_level=False)), axis=0)  # Divide out
     # Restack frames
     dfRenorm = pd.concat([dfWide, renormTest.rename({'m':'n'})]).sort_values(by=['Fit','Type'])  # Sort by Fits? Otherwise new vals appended to end
+
+    # Propagate attrs
+    dfRenorm.attrs = attrsIn
+    dfRenorm.attrs['renorm'] = True
 
     return dfRenorm
 
