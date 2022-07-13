@@ -325,7 +325,7 @@ def loadFitData(self, fList = None, dataPath = None, batch = None, **kwargs):
             fList = [fList]
 
         # Check passed list of files for validity
-        fList = getFilesList(fileIn = fList, fileBase = dataPath)
+        fList = getFilesList(fileIn = fList, fileBase = dataPath, fType = 'pickle')
 
     # Check files exist - either on full path or cwd.
     # Already included in main loop below!
