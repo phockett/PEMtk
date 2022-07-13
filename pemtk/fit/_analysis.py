@@ -122,7 +122,14 @@ def analyseFits(self, dataRange = None, batches = None):
     self.data['fits'] = locals()  # All - may need .copy()?
     del self.data['fits']['self']  # Remove 'self'
 
-    self._setWide()   # Set wide format params with current data, will reset later.
+    try:
+        self._setWide()   # Set wide format params with current data, will reset later.
+    except:   # DataError as e:
+        # 13/07/22: Getting `DataError: No numeric types to aggregate` in testing - likely issue with default index list to _setWide?
+        #  print(f'***Failed to run self._setWide(), DataError {e}')
+        # Update - should now be fixed with explicit type-casting at Pandas table creation.
+        print(f'***Failed to run self._setWide()')
+
 
     self.fitsReport()  # Generate some default report data
 
@@ -1014,16 +1021,38 @@ def paramPlot(self, selectors = {'Type':'m'},
             hue = None, hRound = 7, x='Param', y='value',
             key = 'fits', dataDict = 'dfWide', dataPF = 'dfPF', plotDict = 'plots',
             # thres = None, mask = True,
-            hvType = None, remap = None,
+            hvType = None, plotScatter = True, remap = None,
             backend = 'sns', returnFlag = False, **kwargs):
     """
     Basic scatter-plot of parameter values by name/type.
 
     Currently supports Seaborn for back-end only, and requires wide-form dataDict as input.
 
+    Parameters
+    ----------
+    selectors : dict, optional, default = {'Type':'m'}
+        Used to cross-section data (pd.xs).
+
+    hue : string, optional, default = None
+        Variable name to use for colour mapping (scatter plot points).
+
+    hRound : int, optional, default = 7
+        Rounding for colour mapping scale.
+        May need tweaking for cases with very closely clustered values.
+
+    x='Param'
+
+    y='value'
+
+    key = 'fits', dataDict = 'dfWide', dataPF = 'dfPF', plotDict = 'plots'
+
+    hvType = None, plotScatter = True
+
+
     TODO:
     - better and more concise dim handling for multi-level selection. Integrate to single dict of selectors? (See tmo-dev?)
     - Box/violin plot options. Also option to drop scatter plot in these cases (now partially implemented for HV only).
+    - Add ref data to plots! See e.g. paramsFidelity and paramsCompare
     - HV support?
        - Basic support now in place, but cmapping needs some work for non-cat data. SEE NOTES ELSEWHERE!
        - Also breaks for subselection case unless another hue dim is set.
@@ -1040,6 +1069,7 @@ def paramPlot(self, selectors = {'Type':'m'},
 
     For usage notes see https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_multiproc_class_analysis_141121-tidy.html
 
+    05/07/22: marginally improved plot type handling for HV case.
     19/05/22: updated for multiple XS from selectors, now passed as dictionary with items {level:value}
 
     """
@@ -1124,26 +1154,37 @@ def paramPlot(self, selectors = {'Type':'m'},
         g.set_xticklabels(rotation=-60)
 
     elif self.hv and (backend == 'hv'):
-        g = self.hv.Scatter(pDataLong, kdims=x, vdims=[y,hue])   # For hv case need to include hue as vdims (or will be dropped). hv to PD class may be cleaner?
-        g.opts(color=hue, size=10, jitter=0.4, alpha=0.5, colorbar = True, cmap='coolwarm', legend_position = 'right')  # Some reasonable options, although should pass as **kwargs.
-                                                                                                                        # NOTE: for cat data use legend_position = 'right' to force legend out of plot axes.
-                                                                                                                        #       For numerical data the cbar appears correctly.
-                                                                                                                        # See http://holoviews.org/_modules/holoviews/plotting/bokeh/element.html
+        # Usually start with this, but can skip.
+        if plotScatter:
+            g = self.hv.Scatter(pDataLong, kdims=x, vdims=[y,hue])   # For hv case need to include hue as vdims (or will be dropped). hv to PD class may be cleaner?
+            g.opts(color=hue, size=10, jitter=0.4, alpha=0.5, colorbar = True, cmap='coolwarm', legend_position = 'right')  # Some reasonable options, although should pass as **kwargs.
+                                                                                                                            # NOTE: for cat data use legend_position = 'right' to force legend out of plot axes.
+                                                                                                                            #       For numerical data the cbar appears correctly.
+                                                                                                                            # See http://holoviews.org/_modules/holoviews/plotting/bokeh/element.html
 
         # Add overlays if specified
         # Not stacking order to foreground scatter plot.
         if hvType == 'box':
             ov = self.hv.BoxWhisker(pDataLong, kdims=x, vdims=y)
-            g = ov*g
+
         elif hvType == 'violin':
             ov = self.hv.Violin(pDataLong, kdims=x, vdims=y)
             ov.opts(inner='stick')
+            # g = ov*g
+
+        else:
+            ov = False
+
+        if plotScatter and ov:
             g = ov*g
+        elif ov:
+            g = ov
 
     else:
         g = ''
         # print("Please set 'sns' (Seaborn or Holoviews backend loaded, paramPlot() not available.")
-        print(f"Plotting backed '{backend}' unavailable.")
+        if not returnFlag:
+            print(f"Plotting backed '{backend}' unavailable. Set returnFlag=True for long-form dataframe return only.")
 
     # Code from showPlot()
     if self.__notebook__ and g:     # and (not returnImg):
