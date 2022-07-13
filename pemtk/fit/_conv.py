@@ -39,6 +39,8 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
 
     - Additional batching options, inc. by file for multiple read case.
 
+    13/07/22: Added type checking and casting, this seems to be an issue now/sometimes (PD version?) - currently defaulting all types to 'object' in testing, although was working previously!
+
     """
 
     # Set default indexes
@@ -63,6 +65,11 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
         #     for n,i in enumerate(data.result.params.items()):
             #     print(n,i)
 
+                # 13/07/22: Get types for first case, may be needed later!
+                if n==0:
+                    dtypes = {j:type(getattr(i[1],j)) for j in paramVars}
+
+                # Get data
                 pmType = i[0][0]
                 dataDict[(fitInd, pmType, n)] = {j:getattr(i[1],j) for j in paramVars}
                 dataDict[(fitInd, pmType, n)]['Param'] = i[0][2:]  # Use name + type for easier plotting later?
@@ -78,6 +85,13 @@ def pdConv(self, fitVars = ['success', 'chisqr', 'redchi'], paramVars = ['value'
     # Stack to long-format PD
     dfLong = pd.DataFrame(dataDict).T
     # dfLong = pd.DataFrame.from_dict(dataDict).T  # Same result
+
+    # 13/07/22: cast data types if required (columns only).
+    # Sometimes these are all cast to generic 'object' types (not sure why, PD version maybe?), which causes issues later.
+    for k,v in dtypes.items():
+        if dfLong[k].dtype != v:
+            dfLong[k] = dfLong[k].astype(v)
+
 
     # Set index names
     dfLong.index.names = outputIndex
