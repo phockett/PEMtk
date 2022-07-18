@@ -144,6 +144,8 @@ def pdConvRef(self, paramVars = ['value'], outputIndex = ['Fit','Type','pn']):
 
     TODO: add flexibility here.
 
+    13/07/22: Added type checking and casting, this seems to be an issue now/sometimes (PD version?) - currently defaulting all types to 'object' in testing, although was working previously!
+
     """
 
     # If params are missing, try to set them
@@ -162,6 +164,10 @@ def pdConvRef(self, paramVars = ['value'], outputIndex = ['Fit','Type','pn']):
     for n,i in enumerate(self.params.items()):
     #     print(n,i)
 
+        # 13/07/22: Get types for first case, may be needed later!
+        if n==0:
+            dtypes = {j:type(getattr(i[1],j)) for j in paramVars}
+
         pmType = i[0][0]
         refDataDict[('ref', pmType, n)] = {j:getattr(i[1],j) for j in paramVars}
         refDataDict[('ref', pmType, n)]['Param'] = i[0][2:]  # Use name + type for easier plotting later?
@@ -172,6 +178,12 @@ def pdConvRef(self, paramVars = ['value'], outputIndex = ['Fit','Type','pn']):
     dfRef = pd.DataFrame(refDataDict).T
     dfRef.index.names = outputIndex
     dfRef.attrs['dType'] = 'Params Ref'
+
+    # 13/07/22: cast data types if required (columns only).
+    # Sometimes these are all cast to generic 'object' types (not sure why, PD version maybe?), which causes issues later.
+    for k,v in dtypes.items():
+        if dfRef[k].dtype != v:
+            dfRef[k] = dfRef[k].astype(v)
 
     return dfRef
 
