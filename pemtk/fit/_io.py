@@ -133,7 +133,7 @@ def writeFitData(self, dataPath = None, fName = None, outStem = None, n=None, fT
 
 
 def processedToHDF5(self, dataKey = 'fits', dataTypes = ['dfLong','AFxr'], fType = 'pdHDF',
-              outStem=None, multiFile = False, **kwargs):  #fOut, dataKey = 'fits', dataType='dfLong'):   # dataPath = None, fName = None, outStem = None):  # Assume fOut handled by wrapper
+              outStem=None, multiFile = False, timeStamp = True, **kwargs):  #fOut, dataKey = 'fits', dataType='dfLong'):   # dataPath = None, fName = None, outStem = None):  # Assume fOut handled by wrapper
     """
     Save processed fit data to HDF5.
 
@@ -171,7 +171,12 @@ def processedToHDF5(self, dataKey = 'fits', dataTypes = ['dfLong','AFxr'], fType
         if not multiFile:
             outStemItem = outStem+dataType
 
-        self.writeFitData(dataKey = dataKey, dataType = dataType, outStem = outStemItem, fType = fType, **kwargs)
+        # Use outStem with or without timestamp (pass as fName)
+        if timeStamp:
+            self.writeFitData(dataKey = dataKey, dataType = dataType, outStem = outStemItem, fType = fType, **kwargs)
+
+        else:
+            self.writeFitData(dataKey = dataKey, dataType = dataType, fName = f'{outStemItem}.{fType}', fType = fType, **kwargs)
 
 
 #************* FILE WRITERS
@@ -363,8 +368,13 @@ def loadFitData(self, fList = None, dataPath = None, batch = None, **kwargs):
         # YEP - currently breaks self.anayseFits()
 #         self.data.update({((ind,k) if isinstance(k,int) else k):v for k,v in dataIn.items()})
 
-        # Stack by ints only, but preserve other data per file
-        self.data.update({((ind,k) if not isinstance(k,int) else k+fOffset):v for k,v in dataIn.items()})
+        if batch is not None:
+            # Stack by ints only, but preserve other data per file
+            self.data.update({((ind,k) if not isinstance(k,int) else k+fOffset):v for k,v in dataIn.items()})
+        else:
+            # No batch case - just use inputs directly
+            # self.data.update({k:v for k,v in dataIn.items()})
+            self.data.update(dataIn)
 
         fStart = fOffset
         fOffset = fOffset + fInd + 1 # Update total N
