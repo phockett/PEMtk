@@ -59,7 +59,7 @@ def addColLevel(df, newCol = 'ref', names = ['Dataset','Type']):
 # Quick go at general remapper from dict - need to change by type (ind, col, val)? What about multiindex?
 # Maybe with getattr(data.data['plots']['corrData'],'columns'), then by type? (Index or not)
 # Should be a solved problem...?
-def renameParams(data, mapDict, mapType = 'col'):
+def renameParams(data, mapDict, mapNames = ['lm'], mapType = 'col'):
     """
     Very basic column name reampper for Pandas DataFrame. Based on routine in SymHarm class.
 
@@ -67,9 +67,10 @@ def renameParams(data, mapDict, mapType = 'col'):
 
     TODO: generalise this & consolidate!
 
-    See also value remapping in paramPlot() routine.
+    See also value remapping in paramPlot() routine, runs data.replace({'Param':self.lmmu[remap]}, inplace=True)
 
     """
+
 
     # With variable len remap
     newNames = []
@@ -93,7 +94,7 @@ def renameParams(data, mapDict, mapType = 'col'):
 
     test = data.copy()   # With unstack and fillna
 #     print(test.columns.rename(Params = newNames))
-    test.columns = pd.MultiIndex.from_arrays([newNames], names = ['l,m']).get_level_values(0)  # Force to single level?
+    test.columns = pd.MultiIndex.from_arrays([newNames], names = mapNames).get_level_values(0)  # Force to single level?
     # print(test)
 
     return test
