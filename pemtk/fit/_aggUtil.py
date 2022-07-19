@@ -174,7 +174,7 @@ def aggToXR(self, key = 'agg', cols = {'comp':['m','p'],'compC':['n','pc']},   #
             self.data[key][dType] = xr.Dataset(dataSet)
 
         except Exception as e:
-            print(f"*** Caught exception at xr.Dataset stacking: {e})
+            print(f"*** Caught exception at xr.Dataset stacking: {e}")
             print("Try returnType = 'da' to avoid this and handle dims manually.")
             print("Returning dataSet dictionary instead...")
 
