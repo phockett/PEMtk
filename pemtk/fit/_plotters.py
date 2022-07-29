@@ -190,8 +190,13 @@ def hvSave(self, key = 'plots', pTypes = None, outStem = None, outPath = None, o
 #     if key is not None:
     for item in pTypes:
         for out in outTypes:
+            saveFile = Path(outPath, self.setTimeStampedFileName(f'{outStem}_{item}',ext=out))
+
+            if self.verbose['main']:
+                print(f'Saving self.data[{key}][{item}] to {saveFile}')
+                
             # hvPlotters.hv.save(data.data[key][item], Path(outPath, f'{outStem}_{item}_{timeString.strftime("%d%m%y")}'), fmt=out)
-            self.hv.save(self.data[key][item], Path(outPath, self.setTimeStampedFileName(f'{outStem}_{item}',ext=out)), fmt=out)
+            self.hv.save(self.data[key][item], saveFile, fmt=out)
 
 #     else:
 #         for out in outTypes:
