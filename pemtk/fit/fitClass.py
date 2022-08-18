@@ -515,7 +515,7 @@ class pemtkFit(dataClass):
     # def afblmMatEfit(self, matE = None, lmmuList = None, data = None, basis = None, ADM = None, pol = None, selDims = {}, thres = None, thresDims = 'Eke', lmModelFlag = False, XSflag = True, **kwargs):
     def afblmMatEfit(self, matE = None, data = None, lmmuList = None, basis = None, ADM = None, pol = None, resetBasis = False,
                         selDims = {}, thres = None, thresDims = 'Eke', lmModelFlag = False, XSflag = True,
-                        weights = None, **kwargs):
+                        weights = None, backend = afblmXprod, debug = True, **kwargs):
         """
         Wrap :py:func:`epsproc.geomFunc.afblmXprod` for use with lmfit fitting routines.
 
@@ -564,6 +564,11 @@ class pemtkFit(dataClass):
             To use uncertainties from the data, set weights = 1/(sigma^2)
 
 
+        backend : function, optional, default = afblmXprod
+            Testing 12/08/22
+
+
+
         NOTE:
 
         - some assumptions here, will probably need to run once to setup (with ADMs), then fit using basis returned.
@@ -576,9 +581,13 @@ class pemtkFit(dataClass):
         - More sophisticated bootstrapping methods, maybe with https://github.com/smartass101/xr-random and https://arch.readthedocs.io/en/latest/index.html
 
 
+        12/08/22: testing for MF fitting. Initial tests for case where BASIS PASSED ONLY, otherwise still runs AF calc.
         02/05/22: added weights options and updated docs.
 
         """
+
+        if debug:
+            print(f"Running fits with {backend.__name__}")
 
         # Quick and ugly wrap args for class - should tidy up here!
         if matE is None:
@@ -632,7 +641,7 @@ class pemtkFit(dataClass):
 
         else:
             # Pass **basis here to allow for passing generically through fitting routine and easy/flexible unpacking into afblmXprod()
-            BetaNormX = afblmXprod(matE, **basis,
+            BetaNormX = backend(matE, **basis,
                                                thres = thres, selDims = selDims, thresDims=thresDims, basisReturn = 'BLM', **kwargs)
 
     #         return BetaNormX
@@ -712,6 +721,9 @@ class pemtkFit(dataClass):
             - For lmfit options and defaults see https://lmfit.github.io/lmfit-py/fitting.html
             - For scipy (lmfit backend) see https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html
 
+
+        18/08/22: debugged for MF fitting case, now can pass MF backend via fcn_kws['backend'] = ep.geomFunc.mfblmXprod
+
         02/05/22: added **kwags for backends.
 
         07/09/21: updating for parallel use.
@@ -740,10 +752,13 @@ class pemtkFit(dataClass):
         result = minner.minimize()
 
         # Check final result
-        BetaNormX, _ = self.afblmMatEfit(matE = result.params)
+        # BetaNormX, _ = self.afblmMatEfit(matE = result.params, **fcn_kws)
+        BetaNormX, _ = self.afblmMatEfit(result.params, None, *fcn_args[1:], **fcn_kws)  # DON'T pass data for BLM return.
+                                                                                         # TODO: may want to use all kwargs here for clarity.
         # self.betaFit = BetaNormX
         # self.residual = self.afblmMatEfit(matE = self.result.params, data = self.data[self.subKey]['AFBLM'])
-        residual = self.afblmMatEfit(matE = result.params, data = self.data[self.subKey]['AFBLM'])
+        # residual = self.afblmMatEfit(matE = result.params, data = self.data[self.subKey]['AFBLM'], **fcn_kws)
+        residual = self.afblmMatEfit(result.params, *fcn_args, **fcn_kws)
 
         #************ Push results to main data structure
         # May want to keep multiple sets here?
@@ -765,6 +780,10 @@ class pemtkFit(dataClass):
 
         # Add some metadata
         timeString = dt.now().strftime('%Y-%m-%d_%H-%M-%S')
-        self.data[fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{fitInd}, ({self.data[fitInd]['AFBLM']['t'].size} t, {self.data[fitInd]['AFBLM']['Labels'].size} pol) points, $\chi^2$={self.data[fitInd]['results'].chisqr}\n {timeString}"
+
+        try:
+            self.data[fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{fitInd}, ({self.data[fitInd]['AFBLM']['t'].size} t, {self.data[fitInd]['AFBLM']['Labels'].size} pol) points, $\chi^2$={self.data[fitInd]['results'].chisqr}\n {timeString}"
+        except:
+            self.data[fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{fitInd}, ({self.data[fitInd]['AFBLM']['Labels'].size} pol) points, $\chi^2$={self.data[fitInd]['results'].chisqr}\n {timeString}"
 
         # self.fitInd += 1
