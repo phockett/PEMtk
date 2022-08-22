@@ -34,7 +34,7 @@ except ImportError:
 from pemtk.data.dataClasses import dataClass
 from pemtk.util.env import isnotebook
 from epsproc import matEleSelector, multiDimXrToPD, setADMs, setPolGeoms
-from epsproc.geomFunc import afblmXprod
+from epsproc.geomFunc import afblmXprod, mfblmXprod
 from epsproc.sphPlot import plotTypeSelector
 
 # Set HTML output style for Xarray in notebooks (optional), may also depend on version of Jupyter notebook or lab, or Xr
@@ -88,7 +88,7 @@ class pemtkFit(dataClass):
 
     # from pemtk.util import hvPlotters  # Imports full module, include setup routines.
 
-    def __init__(self, matE = None, data = None, ADM = None, **kwargs):
+    def __init__(self, matE = None, data = None, ADM = None, backend = 'afblmXprod', **kwargs):
 
         self.__notebook__ = isnotebook()
         self.setClassArgs(locals())  # Set attribs from passed args
@@ -98,8 +98,13 @@ class pemtkFit(dataClass):
         # Set dict to hold selection options. May want to propagate back to base class.
         # For using as kwargs set these by function? Might be a bit of a headache, is there a better way?
         # May also want to split by dataType?
+        # NOTE: see self.setSubset() for usage, but should propagate elsewhere too.
         self.selOpts = {'matE':{},
                         'slices':{}}
+
+        # 22/08/22 Added fitOpts mainly for backend selection, but should also set other params here (possibly from self.selOpts?)
+        self.fitOpts = {'backend':self.backends(backend=backend)}
+
 
         # self.subset = {}  # Set dict to hold data subset for fitting
         self.subKey = 'subset'  # Set subKey to use existing .data structure for compatibility with existing functions!
@@ -144,6 +149,35 @@ class pemtkFit(dataClass):
     #     """
     #
     #     self.subset = matEleSelector(self.dsMatE, thres = thres, inds = selDims, dims = thresDims, sq = sq, drop = drop)
+
+    def backends(self, backend = None):
+        """
+        Set backends & select for use.
+
+        Pass backend = 'name of backend' to select.
+        Pass None to return dict of available backends.
+        If a function is passed it is returned directly.
+
+        """
+
+        # Define allowed backend fns. by cagegory
+        backDict = {'af':{'name':'afblm','afblmXprod':afblmXprod},
+                    'mf':{'name':'mfblm','mfblmXprod':mfblmXprod}}
+
+        # Set selected backend if passed.
+        if backend is not None:
+            if isinstance(backend, str):
+                if self.verbose['sub']:
+                    print(f"* Setting fitting backend to {backend}")
+                return backDict[backend[0:2]][backend]
+
+            # If func is passed, just return directly.
+            if callable(backend):
+                return backend
+
+        else:
+            return backDict
+
 
 # ************* Set & select data
 
@@ -515,7 +549,7 @@ class pemtkFit(dataClass):
     # def afblmMatEfit(self, matE = None, lmmuList = None, data = None, basis = None, ADM = None, pol = None, selDims = {}, thres = None, thresDims = 'Eke', lmModelFlag = False, XSflag = True, **kwargs):
     def afblmMatEfit(self, matE = None, data = None, lmmuList = None, basis = None, ADM = None, pol = None, resetBasis = False,
                         selDims = {}, thres = None, thresDims = 'Eke', lmModelFlag = False, XSflag = True,
-                        weights = None, backend = afblmXprod, debug = True, **kwargs):
+                        weights = None, backend = None, debug = False, **kwargs):
         """
         Wrap :py:func:`epsproc.geomFunc.afblmXprod` for use with lmfit fitting routines.
 
@@ -564,8 +598,16 @@ class pemtkFit(dataClass):
             To use uncertainties from the data, set weights = 1/(sigma^2)
 
 
-        backend : function, optional, default = afblmXprod
+        backend : function, optional, default = None
+            UPDATED 21/08/22 - now default = None, uses self.fitOpts['backend']
+            Set at class init, see also self.backends().
+
             Testing 12/08/22
+            Supports backend = afblmXprod or mfblmXprod, and test OK with latter.
+            NOTE - when passing fn externally, it may need to be defined in base namespace. (Default case uses locally defined function.)
+            E.g.
+                data.afblmMatEfit(backend = ep.mfblmXprod) should be OK following `import epsproc as ep`
+                data.afblmMatEfit(backend = mfblmXprod) will fail
 
 
 
@@ -585,6 +627,9 @@ class pemtkFit(dataClass):
         02/05/22: added weights options and updated docs.
 
         """
+
+        if backend is None:
+            backend = self.fitOpts['backend']
 
         if debug:
             print(f"Running fits with {backend.__name__}")
@@ -611,7 +656,7 @@ class pemtkFit(dataClass):
 
             # TODO: set other optional params here
             else:
-                if ADM is None:
+                if (ADM is None) and ('ADM' in self.data[self.subKey].keys()):
                     # ADM = self.ADM['subset']
                     ADM = self.data[self.subKey]['ADM']
 
@@ -631,7 +676,8 @@ class pemtkFit(dataClass):
 
         # Run AFBLM calculation; set basis if not already set.
         if basis is None:
-            BetaNormX, basis = afblmXprod(matE, AKQS=ADM,   # RX=pol,  # RX removed in ePSproc v1.3.0 - not required/valid for AF calcs.
+            BetaNormX, basis = backend(matE, AKQS=ADM,   # FOR AF ONLY
+                                           RX=pol,  # FOR MF ONLY - RX removed in ePSproc v1.3.0 for AF - not required/valid for AF calcs.
                                            thres = thres, selDims = selDims, thresDims=thresDims,
                                            basisReturn = 'ProductBasis', BLMRenorm = BLMRenorm, **kwargs)
 
@@ -736,6 +782,12 @@ class pemtkFit(dataClass):
 
         if fcn_args is None:
             fcn_args = (self.data[self.subKey]['AFBLM'], self.lmmu, self.basis)
+
+        # 21/08/22 - now set defaults in self.fitOpts
+        #            TODO: should handle updates here too, but only used for backend functionality at the moment.
+        if fcn_kws is None:
+            fcn_kws = self.fitOpts
+
 
         # Setup fit
     #     self.minner = Minimizer(self.afblmMatEfit, self.params, fcn_args=(self.data['subset']['AFBLM']))  # , fcn_args=(lmmuList, BetaNormX, basis))  # In this case fn. args present as self.arg, but leave data as passed arg.
