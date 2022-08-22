@@ -61,7 +61,7 @@ from ._util import addColLevel, renameParams, renormMagnitudes
 #     print(isnotebook())
 
 
-def analyseFits(self, dataRange = None, batches = None):
+def analyseFits(self, dataRange = None, batches = None, keyDims = 't'):
     """
     Collate fit data from multiple runs.
 
@@ -106,7 +106,8 @@ def analyseFits(self, dataRange = None, batches = None):
     AFxr = xr.concat(AFstack,'Fit')
     AFxr.attrs['jobLabel'] = "BLM results (all fits)"  # TODO: put some useful info here, date, time, # fits etc.
 
-    AFpd, AFxrRS = multiDimXrToPD(AFxr.squeeze().pipe(np.abs), colDims=['t'],
+    # TODO: add dim checking here. Could/should also set via self.backends, may need to pass via attrs?
+    AFpd, AFxrRS = multiDimXrToPD(AFxr.squeeze().pipe(np.abs), colDims=keyDims,     # ['t'],
                                  thres = 1e-4, fillna=True)
     AFpd.attrs['dType'] = 'AF results Wide'
     AFpdLong = AFpd.reset_index().melt(id_vars=['Fit','l','m'])  # This works for pushing to full long-format with col by t
