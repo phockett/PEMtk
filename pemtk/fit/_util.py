@@ -45,6 +45,22 @@ def _setDefaultFits(self, dataRange):
 
     return dataRange
 
+# Get fit # and maxInd
+# Adapted from self.loadFitData() for general use.
+# Note that case also allows for batching (for multiple files).
+def _getFitInds(self):
+    """
+    Get fitInds = all numerical fit indexes, and fitInd = fitInds.max()
+    """
+
+    fitInds = np.array([k for k,v in self.data.items() if isinstance(k,int)])
+
+    # Parse keys for max N - with checks in case list(dataIn.keys())[-1] fails (e.g. after data handling)
+    fInd = fitInds.max()
+
+    return fInd, fitInds
+
+
 
 # NOTE - this will only work to add a single extra level, and then will nest.
 # More general solutions: https://stackoverflow.com/questions/14744068/prepend-a-level-to-a-pandas-multiindex

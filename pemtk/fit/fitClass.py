@@ -84,7 +84,7 @@ class pemtkFit(dataClass):
     # from ._stats import setPoissWeights
     from ._sym import symCheck
 
-    from ._util import setClassArgs, _setDefaultFits
+    from ._util import setClassArgs, _setDefaultFits, _getFitInds
 
     # from pemtk.util import hvPlotters  # Imports full module, include setup routines.
 
@@ -161,8 +161,8 @@ class pemtkFit(dataClass):
         """
 
         # Define allowed backend fns. by cagegory
-        backDict = {'af':{'name':'afblm','afblmXprod':afblmXprod},
-                    'mf':{'name':'mfblm','mfblmXprod':mfblmXprod}}
+        backDict = {'af':{'name':'afblm','afblmXprod':afblmXprod, 'keyDim':'t'},
+                    'mf':{'name':'mfblm','mfblmXprod':mfblmXprod, 'keyDim':'pol'}}
 
         # Set selected backend if passed.
         if backend is not None:
@@ -622,7 +622,7 @@ class pemtkFit(dataClass):
             04/05/22: added to basis return as basis['weights'], may want to pipe back to self.data[self.subKey]['weights'], or just set elsewhere?
         - More sophisticated bootstrapping methods, maybe with https://github.com/smartass101/xr-random and https://arch.readthedocs.io/en/latest/index.html
 
-
+        21/08/22: now with improved backend handling, working for AF and MF case.
         12/08/22: testing for MF fitting. Initial tests for case where BASIS PASSED ONLY, otherwise still runs AF calc.
         02/05/22: added weights options and updated docs.
 

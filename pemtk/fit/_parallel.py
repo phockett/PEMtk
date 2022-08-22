@@ -70,6 +70,10 @@ def multiFit(self, nRange = [0,10],
     for n in outputs.n:
         self.data[n.item()] = outputs.results.sel({'n':n}).item()
 
+    # Update self.fitInd 
+    fInd, fitInds = self._getFitInds()
+    self.fitInd = fInd
+
 
 def fitPara(data = None, n = None, randomizeParams = True, seedParams = None):
     """
