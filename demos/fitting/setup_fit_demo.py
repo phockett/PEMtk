@@ -181,7 +181,7 @@ data.setSubset(dataKey = 'ADM', dataType = 'ADM', sliceParams = {'t':[4, 5, 4]})
 
 # ### Compute AF-$\beta_{LM}$s
 
-print(f'\n* Calculating MF-BLMs...')
+print(f'\n* Calculating AF-BLMs...')
 
 # data.afblmMatEfit(data = None)  # OK
 BetaNormX, basis = data.afblmMatEfit()  # OK, uses default polarizations & ADMs as set in data['subset']
