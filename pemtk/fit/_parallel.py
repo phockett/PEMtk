@@ -4,6 +4,17 @@
 #
 # Initial dev code: see http://127.0.0.1:8888/lab/tree/dev/PEMtk/fitting/multiFit_tests_and_parallel/PEMtk_fitting_dev_multiproc_070921.ipynb
 #
+"""
+PEMtk wrappers for parallel processing for fitting
+
+Currently wraps xyzpy's `run_combos` for parallel functionality and data handling.
+See `the xyzpy docs <https://xyzpy.readthedocs.io/en/latest/gen_parallel.html>`_ for details.
+
+Other methods to be implemented.
+
+13/09/21  v1  Basic wrapper with XYZPY implemented
+
+"""
 
 # Currently using xyzpy for parallel stuff.
 try:
@@ -21,6 +32,11 @@ def multiFit(self, nRange = [0,10],
 
     Run a batch of fits in parallel, and return results to main class structure.
 
+    Currently wraps xyzpy's `run_combos` for parallel functionality and data handling.
+    See `the xyzpy docs <https://xyzpy.readthedocs.io/en/latest/gen_parallel.html>`_ for details.
+
+    Note: full set of results currently returned as an Xarray DataSet, then sorted back to base class as self.data[n] (integer n).
+    In future may just want to use Xarray return directly?
 
     Parameters
     ----------
@@ -31,6 +47,7 @@ def multiFit(self, nRange = [0,10],
 
     parallel : bool, default = True
         Run fit jobs in parallel?
+        Note - in testing this seemed to be ignored?
 
     num_workers : int, default = None
         Number of cores to use if parallel job.
@@ -70,7 +87,7 @@ def multiFit(self, nRange = [0,10],
     for n in outputs.n:
         self.data[n.item()] = outputs.results.sel({'n':n}).item()
 
-    # Update self.fitInd 
+    # Update self.fitInd
     fInd, fitInds = self._getFitInds()
     self.fitInd = fInd
 
