@@ -114,7 +114,7 @@ def writeFitData(self, dataPath = None, fName = None, outStem = None, n=None, fT
     # 30/06/22: updated handling on ePSproc.IO.writeXarray, so assume this as default case.
     else:
         # _writeXRData(self,fOut,**kwargs)  # NOTE - here only include self for testing!
-        sFlag = self._writeXRData(fOut,**kwargs)
+        sFlag = self._writeXRData(fOut, engine=fType,**kwargs)
 
     if self.verbose['main']:
         if sFlag:
@@ -310,7 +310,11 @@ def loadFitData(self, fList = None, dataPath = None, batch = None, **kwargs):
 
     See writeFitData for other options/file types - to be added here too.
 
+    NOTE: currently only supports single dir for dir scan.
+    For file lists can pass names only, in which case dataPath will be added, or pass full paths in list.
+
     """
+
 
     if dataPath is None:
         # dataPath = os.getcwd()  # OR
@@ -320,12 +324,17 @@ def loadFitData(self, fList = None, dataPath = None, batch = None, **kwargs):
         # Run dir scan
         fList = getFilesList(fileBase = dataPath, fType = 'pickle')
 
+    # NOTE: seems like bad logic here, but allows for full file paths in fList since ep.getFiles() further checks this!
+    # Probably not very efficient however.
     else:
         if not isinstance(fList,list):
             fList = [fList]
 
         # Check passed list of files for validity
-        fList = getFilesList(fileIn = fList, fileBase = dataPath, fType = 'pickle')
+        fList = getFilesList(fileIn = fList, fileBase = dataPath, fType = 'pickle', verbose = self.verbose['sub'])
+
+    if not fList:
+        print('* Warning: empty file list for reader, please check paths.')
 
     # Check files exist - either on full path or cwd.
     # Already included in main loop below!
