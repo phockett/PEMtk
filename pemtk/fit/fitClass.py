@@ -80,7 +80,7 @@ class pemtkFit(dataClass):
     from ._filters import thresFits, _subsetFromXS, getFitInds
     from ._io import processedToHDF5, writeFitData, loadFitData, _pickleData, _writePDData, _writeXRData, setTimeStampedFileName
     from ._parallel import multiFit
-    from ._plotters import BLMfitPlot, lmPlotFit, BLMsetPlot
+    from ._plotters import BLMfitPlot, lmPlotFit, BLMsetPlot, hvSave
     # from ._stats import setPoissWeights
     from ._sym import symCheck
 
