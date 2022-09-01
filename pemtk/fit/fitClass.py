@@ -744,6 +744,10 @@ class pemtkFit(dataClass):
 
         Uses preset self.params for parameters, and self.data[self.subKey] for data.
 
+        Default case runs a Levenberg-Marquardt minimization (method='leastsq'), using :py:func:`scipy.optimize.least_squares`, see the
+        `Scipy docs for more options <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html>`_, using
+        the AF fitting model :py:func:`epsproc.geomFunc.afblmXprod` calculation routine. For MF fitting backend set fcn_kws['backend'] = ep.geomFunc.mfblmXprod
+
 
         Parameters
         -----------
@@ -753,6 +757,7 @@ class pemtkFit(dataClass):
 
         fcn_kws : dict, optional, default = {}
             Keyword arguments to pass to the fitting function.
+            For MF fitting backend set fcn_kws['backend'] = ep.geomFunc.mfblmXprod
 
 
         fitInd : int, optional, default = None
@@ -764,6 +769,7 @@ class pemtkFit(dataClass):
 
         **kwargs
             Passed to the fitting functions, for options see:
+
             - For lmfit options and defaults see https://lmfit.github.io/lmfit-py/fitting.html
             - For scipy (lmfit backend) see https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html
 
