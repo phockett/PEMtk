@@ -103,8 +103,11 @@ class pemtkFit(dataClass):
                         'slices':{}}
 
         # 22/08/22 Added fitOpts mainly for backend selection, but should also set other params here (possibly from self.selOpts?)
-        self.fitOpts = {'backend':self.backends(backend=backend)}
+        # self.fitOpts = {'backend':self.backends(backend=backend)}
 
+        # 01/09/22 - changed self.backends to set directly instead, should be simpler.
+        self.fitOpts = {}
+        self.backends(backend=backend)
 
         # self.subset = {}  # Set dict to hold data subset for fitting
         self.subKey = 'subset'  # Set subKey to use existing .data structure for compatibility with existing functions!
@@ -152,11 +155,18 @@ class pemtkFit(dataClass):
 
     def backends(self, backend = None):
         """
-        Set backends & select for use.
+        Set backends (model functions) for fitting & select for use.
 
-        Pass backend = 'name of backend' to select.
+        Pass backend = 'name of backend' to select and set backend (model function) from the presets.
+
         Pass None to return dict of available backends.
-        If a function is passed it is returned directly.
+
+        If a function is passed it is set directly.
+
+        Settings are pushed to `self.backend` (name) and self.fitOpts['backend'] (function handle).
+
+        01/09/22    v2, modified to set directly, rather than by return.
+        22/08/22    v1
 
         """
 
@@ -168,12 +178,26 @@ class pemtkFit(dataClass):
         if backend is not None:
             if isinstance(backend, str):
                 if self.verbose['sub']:
-                    print(f"* Setting fitting backend to {backend}")
-                return backDict[backend[0:2]][backend]
+                    print(f"* Setting fitting backend to '{backend}'")
 
-            # If func is passed, just return directly.
+                self.backend = backend   # Use this for human-readable name...?
+                self.fitOpts['backend'] = backDict[backend[0:2]][backend]
+
+                # return backDict[backend[0:2]][backend]
+
+            # If func is passed, just set directly.
             if callable(backend):
-                return backend
+                try:
+                    self.backend = backend.__name__   # Use this for human-readable name...?
+                except:
+                    self.backend = backend
+
+                if self.verbose['sub']:
+                    print(f"* Setting fitting backend to '{self.backend}'")  # Use name form here
+
+                self.fitOpts['backend'] = backend
+
+                # return backend
 
         else:
             return backDict
@@ -188,6 +212,7 @@ class pemtkFit(dataClass):
         This basically assumes that the expt. provides AFBLMs.
 
         TO CONSIDER:
+
         - Data format, file IO for HDF5?
         - Routines to read VMI images and process etc, planned for experimental code-base.
         - Further simulation options, e.g. add noise etc., for testing.
@@ -211,6 +236,7 @@ class pemtkFit(dataClass):
 
         wConfig : optional, str, default = None
             Additional handling for weights.
+
             - 'poission', set Poissionian weights to match data dims using self.setPoissWeights()
             - 'errors', set weights as 1/(self.data[keyExpt]['weights']**2)
 
@@ -628,8 +654,13 @@ class pemtkFit(dataClass):
 
         """
 
-        if backend is None:
-            backend = self.fitOpts['backend']
+        if backend is not None:
+            # backend = self.backends(backend)
+            # 01/09/22 - self.backends now always sets.
+            self.backends(backend)
+
+        backend = self.fitOpts['backend']
+
 
         if debug:
             print(f"Running fits with {backend.__name__}")
