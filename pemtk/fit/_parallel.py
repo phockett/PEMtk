@@ -90,6 +90,7 @@ def multiFit(self, nRange = [0,10],
     # Update self.fitInd
     fInd, fitInds = self._getFitInds()
     self.fitInd = fInd
+    self.result = self.data[fInd]['results']  # Set last result to self.result for quick checks.
 
 
 def fitPara(data = None, n = None, randomizeParams = True, seedParams = None):

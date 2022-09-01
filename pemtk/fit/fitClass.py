@@ -862,6 +862,7 @@ class pemtkFit(dataClass):
         # self.data[fitInd]['results'] = copy.deepcopy(self.result)  # Full object copy here.
         self.data[fitInd]['residual'] = residual.copy()
         self.data[fitInd]['results'] = result  #.copy()  # Full object copy here.
+        self.result = self.data[fitInd]['results']  # Set result to self.result for quick checks.
 
         # Keep subset data? Useful in some cases
         if keepSubset:
