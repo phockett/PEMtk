@@ -181,7 +181,7 @@ data.setSubset(dataKey = 'ADM', dataType = 'ADM', sliceParams = {'t':[4, 5, 4]})
 
 # ### Compute AF-$\beta_{LM}$s
 
-print(f'\n* Calculating MF-BLMs...')
+print(f'\n* Calculating AF-BLMs...')
 
 # data.afblmMatEfit(data = None)  # OK
 BetaNormX, basis = data.afblmMatEfit()  # OK, uses default polarizations & ADMs as set in data['subset']
@@ -233,15 +233,17 @@ print('\n*Setting  up fit parameters (with constraints)...')
 
 # With constraints
 # Set param constraints as dict
-paramsCons = {}
-paramsCons['m_PU_SG_PU_1_n1_1'] = 'm_PU_SG_PU_1_1_n1'
-paramsCons['p_PU_SG_PU_1_n1_1'] = 'p_PU_SG_PU_1_1_n1'
+# paramsCons = {}
+# paramsCons['m_PU_SG_PU_1_n1_1'] = 'm_PU_SG_PU_1_1_n1'
+# paramsCons['p_PU_SG_PU_1_n1_1'] = 'p_PU_SG_PU_1_1_n1'
+#
+# paramsCons['m_PU_SG_PU_3_n1_1'] = 'm_PU_SG_PU_3_1_n1'
+# paramsCons['p_PU_SG_PU_3_n1_1'] = 'p_PU_SG_PU_3_1_n1'
+#
+# data.setMatEFit(paramsCons = paramsCons)
 
-paramsCons['m_PU_SG_PU_3_n1_1'] = 'm_PU_SG_PU_3_1_n1'
-paramsCons['p_PU_SG_PU_3_n1_1'] = 'p_PU_SG_PU_3_1_n1'
-
-data.setMatEFit(paramsCons = paramsCons)
-
+# With auto setting (from existing matrix elements)
+data.setMatEFit()
 
 print('\n\n*** Setup demo fitting workspace OK.')
 
