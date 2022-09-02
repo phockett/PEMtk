@@ -39,6 +39,7 @@ See the `intro for more details <about.html>`__.
    fitting/PEMtk_analysis_demo_150621-tidy
    fitting/PEMtk_fitting_multiproc_class_analysis_141121-tidy
    fitting/PEMtk_fitting_basis-set_demo_050621-full
+   fitting/PEMtk_fitting_backends_demo_010922
 
 
 .. toctree::
