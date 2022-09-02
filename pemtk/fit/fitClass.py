@@ -119,7 +119,7 @@ class pemtkFit(dataClass):
         self.lmmu = None
         self.basis = None
         self.fitData = None
-        self.fitInd = 0
+        self.fitInd = -1
 
         # Set dict for file handling
         # Currently just a log - appends to list on file IO.
@@ -814,8 +814,10 @@ class pemtkFit(dataClass):
 
         """
         if fitInd is None:
-            fitInd = self.fitInd
+            # Use next index if not specified
             self.fitInd += 1
+            fitInd = self.fitInd
+            # self.fitInd += 1
 
         if fcn_args is None:
             fcn_args = (self.data[self.subKey]['AFBLM'], self.lmmu, self.basis)
