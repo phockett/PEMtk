@@ -242,15 +242,20 @@ def fitsReport(self, key = 'fits', dataDict = 'dfPF', thres = None, mask = True)
     mask : bool, optional, default = True
         Use self.data[key]['mask'] to subselect data if set.
 
+
+    13/09/22    Added more stats to output.
+    
     """
 
     # Set data subset, functional form - may already have better function elsewhere...?
     pData = self._setData(key, dataDict,  thres = thres, mask = mask)
 
     # Get metrics
+    aggList = ['min', 'mean', 'median', 'max', 'std', 'var']
     fitReport = {'Fits': pData.index.unique(level='Fit').shape[0],  # More general          # pData.shape[0],  # Basic
              'Success': pData['success'].sum(),   # Only valid for dataType = dfPF at the moment, should generalise.
-             'Minima': {'chisqr':pData['chisqr'].min(), 'redchi':pData['redchi'].min()}
+             'Minima': {'chisqr':pData['chisqr'].min(), 'redchi':pData['redchi'].min()},
+             'Stats': {'chisqr':pData['chisqr'].agg(aggList), 'redchi':pData['redchi'].agg(aggList)}
             }
 
     if self.verbose['main']:
