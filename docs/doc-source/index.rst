@@ -21,43 +21,52 @@ See the `intro for more details <about.html>`__.
 
    about
 
+
+
+
+.. .. toctree::
+..    :maxdepth: 2
+..    :caption: Fitting/extracting matrix elements:
+
+Fitting/extracting matrix elements
+==================================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Basic fitting and analysis:
+
+   fitting/PEMtk_fitting_basic_demo_030621-full_010922
+   .. fitting/PEMtk_fitting_demo_multi-fit_tests_130621_r1000
+   fitting/PEMtk_fitting_demo_multi-fit_tests_130621-para_010922
+   fitting/PEMtk_analysis_demo_150621-tidy
+   fitting/PEMtk_fitting_multiproc_class_analysis_141121-tidy
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Advanced:
+
+   fitting/PEMtk_fitting_basis-set_demo_050621-full
+   fitting/PEMtk_fitting_backends_demo_010922
+   fitting/PEMtk_fitting_demo_multi-fit_tests_130621-MFtests_120822-tidy-retest
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Topical review case study:
+
+   topical_review_case_study/matrix_element_extraction_MFrecon_PEMtk_180722-dist
+   topical_review_case_study/MFPAD_replotting_from_file_190722-dist
+
+
+Other topics
+============
+
 .. toctree::
    :maxdepth: 2
    :caption: Symmetrized harmonics:
 
    sym/pemtk_symHarm_demo_160322_tidy
    sym/pemtk_symHarm_epsproc-interface_demo_240322
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Fitting/extracting matrix elements:
-
-   .. toctree::
-      :maxdepth: 2
-      :caption: Basic fitting and analysis:
-
-      fitting/PEMtk_fitting_basic_demo_030621-full_010922
-      .. fitting/PEMtk_fitting_demo_multi-fit_tests_130621_r1000
-      fitting/PEMtk_fitting_demo_multi-fit_tests_130621-para_010922
-      fitting/PEMtk_analysis_demo_150621-tidy
-      fitting/PEMtk_fitting_multiproc_class_analysis_141121-tidy
-
-   .. toctree::
-      :maxdepth: 2
-      :caption: Advanced:
-
-      fitting/PEMtk_fitting_basis-set_demo_050621-full
-      fitting/PEMtk_fitting_backends_demo_010922
-      fitting/PEMtk_fitting_demo_multi-fit_tests_130621-MFtests_120822-tidy-retest
-
-
-   .. toctree::
-      :maxdepth: 2
-      :caption: Topical review case study:
-
-      topical_review_case_study/matrix_element_extraction_MFrecon_PEMtk_180722-dist
-      topical_review_case_study/MFPAD_replotting_from_file_190722-dist
 
 
 .. toctree::
