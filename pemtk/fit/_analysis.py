@@ -820,6 +820,7 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = '
 
     TODO:
 
+    - Added try/except on MemoryError for bins, can get this in 'auto' case for a large data range.
     - see TMO-DEV (https://github.com/phockett/tmo-dev) for some generalised plotting methods.
     - Implement, but better, with decorators for data checking & selection.
     - Import chain: currently using util.hvPlotters.py > self.hv for backend, but could also use a decorator here?
@@ -846,6 +847,14 @@ def fitHist(self, bins = 'auto', dataType = 'redchi', key = 'fits', dataDict = '
     #         print(f"Mask selected {self.data[key]['mask'][dataType].sum()} results (from {self.data[key]['mask'][dataType].count()}).")
 
     # Functional form - may already have better function elsewhere...?
+    if thres is None:
+        # Set thres from bin range if set, this ensures correct X-axis later.
+        # May want to simply use bins to fix axis range later instead?
+        if isinstance(bins,list):
+            thres = bins[-1]
+        if binRange is not None:
+            thres = binRange[-1]
+
     pData = self._setData(key, dataDict, dataType = dataType,  thres = thres, mask = mask)
 
     # Clean up data to per-fit properties (unless these are required)
