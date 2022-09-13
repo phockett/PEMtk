@@ -24,7 +24,15 @@ def thresFits(self, thres = None, dataType = None, key = 'fits', dataDict = 'dfL
         mask = self.data[key][dataDict][dimCheck] < thres
 
     else:
-        mask = self.data[key][dataDict] < thres
+        # Basic try/except here, this can fail for some cases, e.g. dataframe with no col specified
+        try:
+            mask = self.data[key][dataDict] < thres
+        except:
+            print(f"*** Mask not set for self.data[{key}][{dataDict}], try passing dataType=column name to thresFits().")
+            # mask = np.ones(pData.shape[0])
+            mask = self.data[key][dataDict].astype(bool)  # Set full df as mask? Should be all True.
+                                                          # Could also threshold all cols here?
+
 
     self.data[key]['mask'] = mask
 
