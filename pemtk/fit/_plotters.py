@@ -22,8 +22,14 @@ def BLMfitPlot(self, keys = None, dataType='AFBLM', Etype='t', thres=1e-2, col=N
         keys = [self.subKey]  # Default to subset data
 
         # Add current fit results
-        if self.fitInd-1 >= 0:
-            keys.append(self.fitInd-1)
+        # if self.fitInd-1 >= 0:
+        #     keys.append(self.fitInd-1)
+
+        # 12/09/22 - use self._getFitInds(), more robust.
+        fitInd,_ = self._getFitInds()
+        if fitInd is not None:
+            keys.append(fitInd)
+
 
     if keys is 'all':
         keys = [self.subKey]
@@ -56,8 +62,13 @@ def lmPlotFit(self, keys = None, dataType='AFBLM', Etype='t', thres=1e-2, **kwar
             keys = [self.subKey]  # Default to subset data
 
             # Add current fit results
-            if self.fitInd-1 >= 0:
-                keys.append(self.fitInd-1)
+            # if self.fitInd-1 >= 0:
+            #     keys.append(self.fitInd-1)
+
+            # 12/09/22 - use self._getFitInds(), more robust.
+            fitInd,_ = self._getFitInds()
+            if fitInd is not None:
+                keys.append(fitInd)
 
         self.lmPlot(keys = keys, dataType=dataType, Etype=Etype, thres=thres, **kwargs)
 
@@ -194,7 +205,7 @@ def hvSave(self, key = 'plots', pTypes = None, outStem = None, outPath = None, o
 
             if self.verbose['main']:
                 print(f'Saving self.data[{key}][{item}] to {saveFile}')
-                
+
             # hvPlotters.hv.save(data.data[key][item], Path(outPath, f'{outStem}_{item}_{timeString.strftime("%d%m%y")}'), fmt=out)
             self.hv.save(self.data[key][item], saveFile, fmt=out)
 
