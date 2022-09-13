@@ -51,14 +51,21 @@ def _setDefaultFits(self, dataRange):
 def _getFitInds(self):
     """
     Get fitInds = all numerical fit indexes, and fitInd = fitInds.max()
+
     """
 
     fitInds = np.array([k for k,v in self.data.items() if isinstance(k,int)])
 
-    # Parse keys for max N - with checks in case list(dataIn.keys())[-1] fails (e.g. after data handling)
-    fInd = fitInds.max()
+    # If there are some fits (not empty)
+    if fitInds.size:
+        # Parse keys for max N - with checks in case list(dataIn.keys())[-1] fails (e.g. after data handling)
+        fInd = fitInds.max()
 
-    return fInd, fitInds
+        return fInd, fitInds
+
+    # Case for no fits.
+    else:
+        return None, None
 
 
 
