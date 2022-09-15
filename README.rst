@@ -53,8 +53,8 @@ Or from setup.py (from clone dir)
 
 Notes
 
-* The repo can be passed directly to pip, e.g. `pip install git+https://github.com/phockett/PEMtk.git`, see `notes in the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#git>`_.
-* Note that `pip -e` is for 'editable', and requires the source dir to remain, but the installation is also editable, `see notes here <https://stackoverflow.com/questions/41535915/python-pip-install-from-local-dir>`_. Alternatively, use `pip install <path_to_local_pkg>`.
+* The repo can be passed directly to pip, e.g. ``pip install git+https://github.com/phockett/PEMtk.git``, see `notes in the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#git>`_.
+* Note that ``pip -e`` is for 'editable', and requires the source dir to remain, but the installation is also editable, `see notes here <https://stackoverflow.com/questions/41535915/python-pip-install-from-local-dir>`_. Alternatively, use ``pip install <path_to_local_pkg>``.
 
 
 Roadmap

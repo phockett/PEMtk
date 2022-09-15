@@ -33,7 +33,7 @@ Fitting/extracting matrix elements
 
 .. toctree::
    :maxdepth: 2
-   :caption: Basic fitting and analysis:
+   :caption: Basic fitting/extracting matrix elements and analysis:
 
    fitting/PEMtk_fitting_basic_demo_030621-full_010922
    .. fitting/PEMtk_fitting_demo_multi-fit_tests_130621_r1000
@@ -43,7 +43,7 @@ Fitting/extracting matrix elements
 
 .. toctree::
    :maxdepth: 2
-   :caption: Advanced fitting and analysis:
+   :caption: Advanced fitting/extracting matrix elements and analysis:
 
    fitting/PEMtk_fitting_basis-set_demo_050621-full
    fitting/PEMtk_fitting_backends_demo_010922
@@ -52,7 +52,7 @@ Fitting/extracting matrix elements
 
 .. toctree::
    :maxdepth: 2
-   :caption: Topical review fitting case study:
+   :caption: Topical review fitting/extracting matrix elements case study:
 
    topical_review_case_study/matrix_element_extraction_MFrecon_PEMtk_180722-dist
    topical_review_case_study/MFPAD_replotting_from_file_190722-dist
