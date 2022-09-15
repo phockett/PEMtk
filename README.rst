@@ -11,7 +11,7 @@ For now, see
 
 * `Ongoing docs on ReadTheDocs <https://pemtk.readthedocs.io/en/latest/index.html>`__.
 * `ePSdata for general aims & motivation <https://phockett.github.io/ePSdata/about.html#Motivation>`__.
-* `Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2022)<https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data>`__ (manuscript which covers photoionization theory and fitting methodologies, the latter as somewhat of a manual for PEMtk).
+* `Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2022) <https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data>`__ (manuscript which covers photoionization theory and fitting methodologies, the latter as somewhat of a manual for PEMtk).
 
 
 .. Local fig: .. figure:: ./docs/doc-source/figs/QM_unified_schema_wrapped_280820.gv.png
@@ -89,7 +89,7 @@ Cite the software directly via the Github repository for the software::
 
 (For specific releases and commits, see https://github.com/phockett/PEMtk/releases.)
 
-... or the upcoming *Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data* paper (to be published in J. Phys. B) which includes the software (currently available via Authorea/arXiv preprint)::
+... or the upcoming *Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2022)* paper (to be published in J. Phys. B) which includes the software (currently available via Authorea/arXiv preprint)::
 
   @misc{hockett2022TopicalReviewExtracting,
     title = {Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data},
