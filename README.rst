@@ -11,6 +11,7 @@ For now, see
 
 * `Ongoing docs on ReadTheDocs <https://pemtk.readthedocs.io/en/latest/index.html>`__.
 * `ePSdata for general aims & motivation <https://phockett.github.io/ePSdata/about.html#Motivation>`__.
+* `Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2022)<https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data>`__ (manuscript which covers photoionization theory and fitting methodologies, the latter as somewhat of a manual for PEMtk).
 
 
 .. Local fig: .. figure:: ./docs/doc-source/figs/QM_unified_schema_wrapped_280820.gv.png
@@ -65,3 +66,45 @@ Roadmap
 - Image simulation.
 - More versatile plotting routines.
 - Interfaces for various experimental platforms.
+
+
+Citation
+--------
+
+If you make use of PEMtk in your research, please cite it.
+
+Cite the software directly via the Github repository for the software::
+
+  @misc{PEMtkGithub,
+    title = {Photoelectron Metrology Toolkit (PEMtk)},
+    author = {Hockett, Paul},
+    url = {https://github.com/phockett/PEMtk},
+    DOI={10.6084/m9.figshare.3545639},
+    publisher={Github},
+    howpublished = {\url{https://github.com/phockett/PEMtk}},
+    author={Hockett, Paul},
+    year={2021},
+    commit = {aca9bc06bee4ab16dbe3d30a5b1e1b5604f975c5}
+  }
+
+(For specific releases and commits, see https://github.com/phockett/PEMtk/releases.)
+
+... or the upcoming *Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data* paper (to be published in J. Phys. B) which includes the software (currently available via Authorea/arXiv preprint)::
+
+  @misc{hockett2022TopicalReviewExtracting,
+    title = {Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data},
+    author = {Hockett, Paul and Makhija, Varun},
+    year = {2022},
+    month = sep,
+    number = {arXiv:2209.04301},
+    eprint = {2209.04301},
+    eprinttype = {arxiv},
+    primaryclass = {physics, physics:quant-ph},
+    publisher = {arXiv},
+    doi = {10.48550/arXiv.2209.04301},
+    url = {https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data},
+    archiveprefix = {arXiv},
+
+  }
+
+(Citation styles for software `from StackExchange <https://academia.stackexchange.com/questions/14010/how-do-you-cite-a-github-repository>`_.)
