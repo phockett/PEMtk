@@ -89,14 +89,14 @@ Cite the software directly via the Github repository for the software::
 
 (For specific releases and commits, see https://github.com/phockett/PEMtk/releases.)
 
-... or the upcoming *Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2022)* paper (to be published in J. Phys. B) which includes the software (currently available via Authorea/arXiv preprint)::
+... or the upcoming `Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2022) <https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data>`__ paper (to be published in J. Phys. B) which includes the software (currently available `via Authorea <https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data>`__ or as `an arXiv preprint <https://arxiv.org/abs/2209.04301>`__)::
 
-  @misc{hockett2022TopicalReviewExtracting,
+  @article{hockett2022TopicalReviewExtracting,
     title = {Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data},
     author = {Hockett, Paul and Makhija, Varun},
     year = {2022},
     month = sep,
-    number = {arXiv:2209.04301},
+    eid = {arXiv:2209.04301},
     eprint = {2209.04301},
     eprinttype = {arxiv},
     primaryclass = {physics, physics:quant-ph},
