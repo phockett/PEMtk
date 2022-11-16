@@ -183,7 +183,7 @@ def filterData(self, filterOptions = {}, keys = None, dim = 'energies', dTypes =
                     mask *= (testData[:,filterOptions[item][2]] >= filterOptions[item][0]) & (testData[:,filterOptions[item][2]] <= filterOptions[item][1])
 
             else:
-                if self.verbose['main'] and (item is not 'desc'):   # Ignore 'desc' entries.
+                if self.verbose['main'] and (item != 'desc'):   # Ignore 'desc' entries.
                     print(f"Can't filter on data type {item}, not found in dataset {key}")
 
             # TODO: add other filter types here.
@@ -241,12 +241,12 @@ def getDataDict(self, dim, key = None, dTypes = None, returnType = 'dType', drop
             # else:
             #     dataDict = None
 
-    if returnType is 'dType':
+    if returnType == 'dType':
         return dataDict
 
-    elif returnType is 'data':
+    elif returnType == 'data':
         if dataDict is not None:
-            if dataDict is 'raw':
+            if dataDict == 'raw':
                 # return np.array(self.data[key][dataDict][dim])  # Explicit conversion to np.array - may just wrap everything this way?
                 dataOut = np.array(self.data[key][dataDict][dim])
             else:

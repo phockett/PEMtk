@@ -56,7 +56,7 @@ def setAggMatE(self, key = 'agg', dataOut = None,
     if dataOut is None:
         dataOut = 'matEpd'
 
-    if key is not 'ref':
+    if key != 'ref':
         # Final results from aggregate data & reformat
 
 
@@ -103,7 +103,7 @@ def setAggMatE(self, key = 'agg', dataOut = None,
     self.data[key][dataOut] = meanMatE
 
     if self.verbose['main']:
-        if key is not 'ref':
+        if key != 'ref':
             print(f'Set reformatted aggregate data to self.data[{key}][{dataOut}].')
         else:
             print(f'Set reformatted ref data to self.data[{key}][{dataOut}].')
