@@ -557,8 +557,22 @@ class symHarm():
 
     #*********************** DISPLAY FUNCTIONS
 
-    def printCharacterTable(self):
-        """Print character table with species & degen using Pandas"""
+    def printCharacterTable(self, returnPD = False):
+        """
+        Print character table with species & degen using Pandas
+
+        Parameters
+        ----------
+
+        returnPD : bool, optional, default = False
+            Return PD object instead of display() if True.
+
+        Returns
+        -------
+
+        Empty unless returnPD = True set.
+
+        """
 
         # Basic version
     #         for n,item in enumerate(self.ctx.character_table.symmetry_species):
@@ -568,13 +582,17 @@ class symHarm():
         if not hasattr(self, 'charTablePD'):
             self.setCharTablePD()
 
+        if returnPD:
+            return self.charTablePD
+
         # TODO - add isnotebook and related checks here
         display(self.charTablePD)
 
 
 
     # Display table
-    def displayXlm(self, names = 'longnames', YlmType = 'real', setCols = 'l'):
+    def displayXlm(self, names = 'longnames', YlmType = 'real', setCols = 'l',
+                    dropLevels=[], returnPD = False, sticky = False):
         """
         Print table of values from Pandas Dataframe self.coeffs['DF']['real'], with specified labels (from self.coeffs['DF']['real'].attrs['indexes']).
 
@@ -592,6 +610,22 @@ class symHarm():
             Set which label to use for display.
             Set via self.coeffsDF.unstack(level=setCols).
             Note this level must be in the DataFrame index, and there is currently no error checking.
+
+        dropLevels : str or list of strings, default = []
+            Drop levels specified from displayed table.
+
+        returnPD : bool, optional, default = False
+            Return PD object instead of display() if True.
+
+        sticky : bool, optional, default = False
+            Apply "sticky" index styler to displayed table.
+            (If supported by Pandas version.)
+
+
+        Returns
+        -------
+
+        Empty unless returnPD = True set.
 
         """
 
@@ -613,6 +647,9 @@ class symHarm():
         else:
             print(f"Didn't recognise Ylm type {YlmType}")
 
+        # Drop levels if specified (will return as is if dropLevels empty)
+        inputData = inputData.droplevel(dropLevels)
+
         # With variable len remap
         newNames = []
         for k in inputData.index.names:
@@ -626,10 +663,17 @@ class symHarm():
         test = inputData   # With unstack and fillna
         test.index.rename(names = newNames, inplace=True)
 
-        # Try displaying with sticky index, but may fail in older PD versions (OK in v1.4, fails in v1.1)
-        try:
-            display(test.style.set_sticky(axis="index"))
-        except AttributeError:
+        if returnPD:
+            return test
+
+        if sticky:
+            # Try displaying with sticky index, but may fail in older PD versions (OK in v1.4, fails in v1.1)
+            try:
+                display(test.style.set_sticky(axis="index"))
+            except AttributeError:
+                display(test)
+                
+        else:
             display(test)
 
 
