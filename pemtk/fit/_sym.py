@@ -85,7 +85,7 @@ def symCheck(self, pdTest = None, matE = None, colDim = 'it', lams = None, verbo
         Dictionary of test lambda functions.
         If not set, will use lams = symCheckDefns()
 
-    
+
 
 
     Returns
@@ -148,7 +148,8 @@ def symCheck(self, pdTest = None, matE = None, colDim = 'it', lams = None, verbo
 
     #         lmmuListStr = lmmuListStrReformat(df[1][0].index)  # Set full index
             testLabel = lmmuListStrReformat([testItem[0]])[0]  # Test item only
-            df[1][0].drop(testItem[0], inplace=True)  # Pop test item to avoid self matches
+            # df[1][0].drop(testItem[0], inplace=True)  # Pop test item to avoid self matches, FAILING April 2023 - python or Pandas changes...?
+            df[1][0].pop(testItem[0])  # Pop test item to avoid self matches, OK 03/04/23 - PD 1.4.1, Python 3.9.10
 
             for k,v in lams.items():
     #             testVal = testItem[1].apply(v)
