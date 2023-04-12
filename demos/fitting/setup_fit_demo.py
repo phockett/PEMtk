@@ -7,6 +7,21 @@ print('For more details see https://pemtk.readthedocs.io/en/latest/fitting/PEMtk
 print('To use local source code, pass the parent path to this script at run time, e.g. "setup_fit_demo ~/github"')
 print('\n\n* Loading packages...')
 
+# 03/04/23: updated to use argparse for multiple arg passing
+# Note this keeps positional arg for modPath for back-compatibility.
+import argparse
+
+parser = argparse.ArgumentParser(description='Setup fitting workspace with module imports and test dataset. If not set default system paths will be used.')
+parser.add_argument("modPathDefault", nargs='?', default=None, type=str, help='Module path (optional, positional) - deprecated, use -m flag for preference.')
+parser.add_argument("-d", "--dataPath", type=str, help='Data path. Defaults to module path if not set.')
+parser.add_argument("-m", "--modPathName", type=str, help='Module path (optional).')
+args = parser.parse_args()
+# print(args)
+
+modPath = args.modPathName if args.modPathName else args.modPathDefault
+dataPath = args.dataPath if args.dataPath else None
+# print(f"Using input module path {modPath}, data path {dataPath}.")
+
 # A few standard imports...
 
 # +
@@ -29,13 +44,16 @@ timeString = dt.now()
 # NOTE - this currently doesn't pick up preset modPath case in notebook? Not sure why - something incorrect in scoping here.
 
 # With passed arg
-args = sys.argv
+# args = sys.argv
 localFlag = False
 
-if len(args) > 1:
-    modPath = Path(args[1])
+# if len(args) > 1:
+    # modPath = Path(args[1])
+
+if modPath:
 
     # Append to sys path
+    modPath = Path(modPath)
     sys.path.append((modPath/'ePSproc').as_posix())
     sys.path.append((modPath/'PEMtk').as_posix())
 
@@ -57,10 +75,16 @@ except ImportError as e:
     else:
         print(f"\n*** Couldn't import packages, are ePSproc and PEMtk installed? For local copies, pass parent path to this script.")
 
+    print(f"\n*** Required modules not found. Setup script will abort.")
+    sys.exit()
 
-# Set data path
-# Note this is set here from ep.__path__, but may not be correct in all cases - depends on where the Github repo is.
-epDemoDataPath = Path(ep.__path__[0]).parent/'data'
+# Set data path, defaults to Path(ep.__path__[0]).parent/'data'
+# if len(args) > 2:
+if dataPath:
+    epDemoDataPath = Path(dataPath)
+else:
+    # Note this is set here from ep.__path__, but may not be correct in all cases - depends on where the Github repo is.
+    epDemoDataPath = Path(ep.__path__[0]).parent/'data'
 
 
 
@@ -96,9 +120,11 @@ ep.plot.hvPlotters.setPlotters()
 
 # Multiorb data
 dataPath = os.path.join(epDemoDataPath, 'photoionization', 'n2_multiorb')
+# dataPath = Path(epDemoDataPath, 'photoionization', 'n2_multiorb')
 
-print(f'\n* Loading demo matrix element data from {dataPath}...')
+print(f'\n* Loading demo matrix element data from {dataPath}')
 
+# TODO: add in some path error checking here or in scanFiles() - currently errors if no files found.
 data = pemtkFit(fileBase = dataPath, verbose = 0)
 
 # Read data files
@@ -121,7 +147,11 @@ ADMdataFile = os.path.join(epDemoDataPath, 'alignment', 'N2_ADM_VM_290816.mat')
 
 print(f'\n\n* Loading demo ADM data from {ADMdataFile}...')
 
-ADMs = loadmat(ADMdataFile)
+try:
+    ADMs = loadmat(ADMdataFile)
+except FileNotFoundError:
+    print("\n*** ADM data file not found. Setup script will abort.")
+    sys.exit()
 
 # Set tOffset for calcs, 3.76ps!!!
 # This is because this is 2-pulse case, and will set t=0 to 2nd pulse (and matches defn. in N2 experimental paper)
