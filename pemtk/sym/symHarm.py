@@ -96,7 +96,7 @@ class symHarm():
     """
 
 
-    def __init__(self, PG = 'Cs', lmax = 4, dims = ['C', 'h', 'mu', 'l', 'm']):
+    def __init__(self, PG = 'Cs', lmax = 4, llist = None, dims = ['C', 'h', 'mu', 'l', 'm']):
         """
         Init class object.
 
@@ -108,6 +108,11 @@ class symHarm():
         lmax : int, default = 4
             Maximum l to use.
 
+        llist : list, optional, default = None
+            If set, used instead of lmax to define specific l to use (all m).
+            E.g. llist = [1,3,5].
+            TODO: more options here, e.g. set m, pass existing Xarray or SHtools objects?
+
         dims : list, default = ['C', 'h', 'mu', 'l', 'm']
             Dimension labels to use for outputs.
 
@@ -116,6 +121,7 @@ class symHarm():
         # Set params
         self.PG = PG
         self.lmax = lmax
+        self.llist = llist
 
         self.dims = dims # Dims names from defaults, or as passed.
         self.dtypes = ['O',int,int,int,int]  # Set dtypes for dims
@@ -145,7 +151,12 @@ class symHarm():
 
         self.basis_functions = []
 
-        for l in range(0, self.lmax+1):
+        if self.llist is not None:
+            llist = self.llist
+        else:
+            llist = range(0, self.lmax+1)
+
+        for l in llist:
             for m in range(-l,l+1):
         #         basis_functions.extend([set_basis(e, l=l, m=m, n=n, name=f"{l}s{m}") for e in elements])
                 self.basis_functions.extend([self.set_basis(e, l=l, m=m, n=self.lmax+1, name=f"{l},{m}") for e in self.elements])
@@ -672,7 +683,7 @@ class symHarm():
                 display(test.style.set_sticky(axis="index"))
             except AttributeError:
                 display(test)
-                
+
         else:
             display(test)
 
