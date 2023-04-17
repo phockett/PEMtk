@@ -112,6 +112,7 @@ class symHarm():
             If set, used instead of lmax to define specific l to use (all m).
             E.g. llist = [1,3,5].
             TODO: more options here, e.g. set m, pass existing Xarray or SHtools objects?
+            Can also subselect from outputs of course.
 
         dims : list, default = ['C', 'h', 'mu', 'l', 'm']
             Dimension labels to use for outputs.
