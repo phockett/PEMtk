@@ -34,6 +34,8 @@ except:
     xrFlag = False
 
 from ._util import prefixAxisTitles, listPGs, toePSproc
+from ._directProduct import directProductTable
+# from ._dipoleTerms import dipoleTerms, allowedProducts
 
 
 class symHarm():
@@ -75,6 +77,7 @@ class symHarm():
         - Routines have been tested with v4.5 and 4.9 (current March 2022).
 
     - TODO: Interface to PEMtk/ePSproc for other plotters and handling routines.
+    - TODO: some hardcoded labelling to fix, also incorrect in places ("character" instead of "irrep")
 
 
     Examples
@@ -144,6 +147,15 @@ class symHarm():
         self.setCoeffsSH()
         self.setCoeffsXR()
 
+        # Additional outputs
+        self.getIrreps()
+        self.directProducts, self.directProductsDict = directProductTable(PG = self.PG)
+
+        # Dipole terms
+        # self.dipoleTerms = dipoleTerms(self.PG)  # TODO: may want to set dimMap here too?
+        # self.dipoleProducts = allowedProducts(*self.dipoleTerms)
+
+
 
     #*********************** CALCULATION FUNCTIONS
 
@@ -153,7 +165,12 @@ class symHarm():
         self.basis_functions = []
 
         if self.llist is not None:
+            # Wrap int case.
+            if not isinstance(self.llist, list):
+                self.llist = [self.llist]
+
             llist = self.llist
+
         else:
             llist = range(0, self.lmax+1)
 
@@ -216,6 +233,25 @@ class symHarm():
         """Wrap toePSproc method."""
 
         self.coeffs[dataType] = toePSproc(self.coeffs, dimMap = dimMap, dataType = dataType, verbose = self.verbose)
+
+    def getIrreps(self):
+        """
+        Get irrep labels from libmsym repr.
+
+        Quick hack to grab labels from self.ctx.character_table.symmetry_species objects, should be a better way.
+
+        For source, see https://github.com/mcodev31/libmsym/blob/c99470376270db4ec4c925b952fa722e011377d6/bindings/python/libmsym/libmsym.py#L65
+
+        """
+
+        irreps = []
+
+        for item in self.ctx.character_table.symmetry_species:
+
+    #         print(item)
+            irreps.append(item.name)
+
+        self.irreps = irreps
 
 
     def getSymOps(self):
