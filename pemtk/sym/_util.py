@@ -67,7 +67,7 @@ def listPGs():
 
 
 
-def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, dataType = 'BLM', verbose = 1):
+def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, sumDims = [], dataType = 'BLM', verbose = 1):
     """
     Convert/conform Xarray of symmetrized harmonics to reference ePSproc data structures.
 
@@ -84,6 +84,11 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, dataType = 'BLM', verbose 
     dimMap : dictionary, default = {'C':'Cont','h':'it'}
         Any specific dim remapping required.
         The default case remaps to ePSproc labels 'Cont' and 'it'.
+
+    sumDims : list, optional, default = []
+        Dims to sum over.
+        This currently supports only unstacked dims in the INPUT array.
+        TODO: better dim handling here.
 
     dataType : str, default = 'BLM'
         Data type to conform to.
@@ -102,7 +107,7 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, dataType = 'BLM', verbose 
                                     # Or sum over mu?
     daTest = coeffs['XR'].copy()
 
-    daTest = daTest.unstack()
+    daTest = daTest.unstack().sum(sumDims)  # Quick sum, NOTE NO DIM CHECKS HERE
 
     daTest = daTest.rename(dimMap)  # Remap existing dims
 
@@ -130,7 +135,8 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, dataType = 'BLM', verbose 
             if dim in ['Cont','Targ','Total','Type']:
                 daTest = daTest.expand_dims({dim: ['U']})
             else:
-                daTest = daTest.expand_dims({dim: [0]})
+                daTest = daTest.expand_dims({dim: [np.nan]})   # 17/04/23: modified unassigned dims to NaN.
+                # daTest = daTest.expand_dims({dim: [0]})
     #         daTest = daTest.expand_dims({dim: [0]})
 
             if verbose:
