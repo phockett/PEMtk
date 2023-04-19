@@ -34,7 +34,7 @@ except:
     xrFlag = False
 
 from ._util import prefixAxisTitles, listPGs, toePSproc
-from ._directProduct import directProductTable
+from ._directProduct import directProductTable, diretProductFromList
 # from ._dipoleTerms import dipoleTerms, allowedProducts
 
 
@@ -98,6 +98,8 @@ class symHarm():
 
     """
 
+    from ._dipoleTerms import dipoleTermsSymHarm as dipoleTerms
+    from ._dipoleTerms import allowedProductsTable, assignSymMuTerms, assignMissingSym
 
     def __init__(self, PG = 'Cs', lmax = 4, llist = None, dims = ['C', 'h', 'mu', 'l', 'm']):
         """
@@ -149,9 +151,13 @@ class symHarm():
 
         # Additional outputs
         self.getIrreps()
-        self.directProducts, self.directProductsDict = directProductTable(PG = self.PG)
+        self.directProductTable, self.directProductsDict = directProductTable(PG = self.PG)
+        # self.directProduct = diretProductFromList
 
         # Dipole terms
+        # self.dipoleTerms = dipoleTerms
+        self.dipoleTerms()
+        self.allowedProductsTable()
         # self.dipoleTerms = dipoleTerms(self.PG)  # TODO: may want to set dimMap here too?
         # self.dipoleProducts = allowedProducts(*self.dipoleTerms)
 
@@ -225,6 +231,40 @@ class symHarm():
         self.setCoeffsPD()
 
 
+    def directProduct(self, terms):
+        """
+        Compute direct products for a list of terms (symmetries/species/irreps).
+        """
+
+        prodList, *_ = diretProductFromList(PG = self.PG, terms = terms)
+
+        return prodList
+
+
+    def directProductDipole(self, terms):
+        """
+        Compute direct products for a list of terms (symmetries/species/irreps), and include dipole terms.
+        """
+
+        # Dipole terms
+        dipoleDict = self.dipole['dipoleSyms']
+
+        # Loop over dipole terms and find direct products
+        dipDictOut = {}
+        for s in dipoleDict:
+            termsD = terms.copy()
+            termsD.append(s)
+            # print(termsD)
+            rList, *_ = diretProductFromList(PG = self.PG, terms=termsD)
+            # dipDict[s] = rDict.copy()
+            dipDictOut[s] = dipoleDict[s].copy()
+            dipDictOut[s]['dipSym'] = s
+            dipDictOut[s]['result'] = rList.copy()
+            # dipDict[s]['valid'] = [k for k in rDict.keys() if k == 'A1g'] # self.irreps[0]]
+            dipDictOut[s]['allowed'] = True if self.irreps[0] in rList else False  # Allowed terms contain totally symmetric rep.
+            dipDictOut[s]['terms'] = terms
+
+        self.dipole['dipoleProducts'] = dipDictOut.copy()
 
 
     #*********************** CONVERSION FUNCTIONS

@@ -14,9 +14,10 @@ Formulas should follow those on p29 in Atkins, B.P.W., Child, M.S. and Phillips,
 
 import libmsym as msym, numpy as np, pandas as pd
 
+#********* LOW LEVEL FUNCTIONS
 def prod(character_table,s1,s2):
     """
-    Array product of irrep characters.
+    Array product of two irrep characters.
 
     Parameters
     ----------
@@ -43,6 +44,54 @@ def prod(character_table,s1,s2):
     r = character_table.table[s1]*character_table.table[s2]
     return r;
 
+
+def prodList(character_table,symList):
+    """
+    Array product of (any number of) irrep characters from a list.
+
+    Parameters
+    ----------
+    character_table : libmsym character table.
+
+    symList : list
+        List of species to use.
+        E.g. symList = ['A1g','A1u','B1u', 'B1u'] defines resultant as direct product of these terms.
+
+    Returns
+    -------
+    np.array : array product.
+
+
+    Examples
+    --------
+    >>> PG = 'D2h'
+    >>> ctx = msym.Context(elements=[msym.Element(name = "H", coordinates = [.0,.0,.0])], basis_functions=[], point_group=PG)
+    >>> r = prodMulti(ctx.character_table, ['A1g','A1u','B1u', 'B1u'])
+    >>> r
+    array([ 1.,  1., -1., -1., -1., -1.,  1.,  1.])
+
+    """
+
+    # Symmetry lookup table.
+    symLookup = {item.name:n for n,item in enumerate(character_table.symmetry_species)}
+
+    # Numpy array style - just need array product of representations here
+    # UPDATE: now assigned in loop.
+    # r = np.ones(len(character_table.table[0]))
+    # r = character_table.table[0]
+
+    for n,s in enumerate(symList):
+        # TODO: add try/except for error checking here.
+        sInd = symLookup[s]
+
+        if n == 0:
+            r = character_table.table[sInd].copy()
+        else:
+            r *= character_table.table[sInd]
+
+    return r;
+
+
 # Original version (looped)
 # def dot(character_table,s,p):
 #     """Irrep representation dot products.""""
@@ -63,6 +112,88 @@ def dotArray(character_table,s,p):
     return int(round(sum(r)))//sum(h)
     # return int(round(r))//h.sum();
     # return r, h
+
+# Try the final analysis/projection/dot products independently.
+def symDecomposition(character_table, p):
+    """
+    Decompose basis vector to irreps
+
+    Parameters
+    ----------
+    character_table : libmsym character table.
+
+    p : np.array
+        Vecotor for analysis.
+        Must contain len(character_table.symmetry_species) elements.
+
+    """
+    # Try array/dict style...
+    dDict = {}
+    # dArr = []  # List
+    dArr = np.zeros(len(character_table.symmetry_species));  # Array
+
+    for (k,s3) in enumerate(character_table.symmetry_species):
+    #     # d = dot(ctx.character_table,k,p)
+
+        dDict[s3.name] = dotArray(character_table,k,p)   # This will output full vector with labels
+        # dArr.append(dotArray(ctx.character_table,k,p))   # Vector only
+        # dArr[k] = dotArray(ctx.character_table,k,p)
+        dArr[k] = dDict[s3.name].copy()
+
+    return dDict, dArr
+
+
+#******** TOP LEVEL FUNCTIONS
+
+def diretProductFromList(PG="Cs", terms=[]):
+    """
+    Compute direct products from a list of irreps/species with [libmsym](https://github.com/mcodev31/libmsym).
+
+    Developed from https://github.com/mcodev31/libmsym/issues/29.
+
+    Parameters
+    ----------
+    PG : point group string.
+        Supported point groups from libmsym: Ci, Cs, Cnv, Dn, Dnh, Dnd, Td, O, Oh, I and Ih
+
+    terms : list
+        List of species to use.
+        E.g. symList = ['A1g','A1u','B1u', 'B1u'] defines resultant as direct product of these terms.
+
+    Returns
+    -------
+    list : resultant as list of specices.
+
+    dict : contains various other forms of the output (as labelled).
+
+
+    Examples
+    --------
+    >>> dDict, _ = diretProductFromList(PG = 'D2h', terms = ['A1g','A1u','B1u', 'B1u'])
+    >>> dDict
+    {'A1g': 0,
+     'B1g': 0,
+     'A1u': 1,
+     'B1u': 0,
+     'B3g': 0,
+     'B3u': 0,
+     'B2g': 0,
+     'B2u': 0}
+
+    """
+
+    # Create libmsym object
+    ctx = msym.Context(elements=[msym.Element(name = "H", coordinates = [.0,.0,.0])], basis_functions=[], point_group=PG)
+
+    # Vector product of specified terms
+    p =  prodList(ctx.character_table, terms)
+
+    # Decompose to irreps
+    dDict, dArr = symDecomposition(ctx.character_table, p)
+    resultsDict = {k:v for k,v in dDict.items() if v > 0}
+
+    return list(resultsDict.keys()), {'resultsDict':resultsDict,
+            'fullDict':dDict,'fullArr':dArr, 'vectorProduct':p, 'libmsymObj':ctx}
 
 
 def directProductTable(PG="Cs"):
