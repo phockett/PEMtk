@@ -267,6 +267,59 @@ class symHarm():
         self.dipole['dipoleProducts'] = dipDictOut.copy()
 
 
+    def directProductContinuum(self, terms, disp = True):
+        """
+        Compute direct products for a list of terms (symmetries/species/irreps), and include dipole terms.
+
+        Similar to directProductDipole, but additionally loops over all irreps to determine valid photoionization combinations, i.e. allowed continuum symmetries for the given cases.
+        """
+
+        # Dipole terms
+        dipoleDict = self.dipole['dipoleSyms']
+
+        # Loop over dipole terms and find direct products
+        dipDictOut = {}
+        for s in dipoleDict:
+            termsD = terms.copy()
+            termsD.append(s)
+            # print(termsD)
+
+            # loop over all irreps and check if terms are valid.
+            for s2 in self.irreps:
+                termsD2 = termsD.copy()
+                termsD2.append(s2)
+                # print(termsD2)
+
+                rList, rDict = diretProductFromList(PG = self.PG, terms=termsD2)
+                # dipDict[s] = rDict.copy()
+                dipDictOut[(s,s2)] = dipoleDict[s].copy()
+                dipDictOut[(s,s2)]['dipSym'] = s
+                dipDictOut[(s,s2)]['targSym'] = s2
+                dipDictOut[(s,s2)]['result'] = rList.copy()
+                # dipDict[s]['valid'] = [k for k in rDict.keys() if k == 'A1g'] # self.irreps[0]]
+                dipDictOut[(s,s2)]['allowed'] = True if 'A1g' in rList else False
+                dipDictOut[(s,s2)]['terms'] = terms
+                # dipDict[s].update(dipoleDict[s])
+
+        # Set dataframe and tidy
+        pdCont = pd.DataFrame(dipDictOut).drop(['dipSym','targSym']).T
+        pdCont.index.rename(['Dipole','Target'], inplace=True)
+        pdCont = pdCont.reindex(columns=sorted(pdCont.columns))
+
+        self.continuum = {'dict': dipDictOut.copy(),
+                           'PD': pdCont,
+                           'allowed': {'PD':pdCont[pdCont.allowed],
+                                      'list': pdCont[pdCont.allowed == True ].index.tolist(),   # (Dip, Targ) tuples
+                                      'targList': pdCont[pdCont.allowed == True ].index.get_level_values('Target').tolist(),  # Targ only
+                                      'dipList': pdCont[pdCont.allowed == True ].index.get_level_values('Dipole').tolist(),}  # Dip only
+                          }
+
+        # Display with highlights?
+        # For styler see https://www.codespeedy.com/highlight-a-row-in-pandas-data-frame/
+        if disp:
+            display(pdCont.style.apply(lambda x: ['background-color : yellow']*x.shape[0] if x.allowed else ['background-color : lightgrey']*x.shape[0], axis = 1))   # One liner OK with axis set and mult. by cols.
+
+
     #*********************** CONVERSION FUNCTIONS
 
     def toePSproc(self, dimMap = {'C':'Cont','h':'it', 'mu':'muX'}, dataType = 'BLM'):
@@ -680,7 +733,8 @@ class symHarm():
 
     # Display table
     def displayXlm(self, names = 'longnames', YlmType = 'real', setCols = 'l',
-                    dropLevels=[], returnPD = False, sticky = False):
+                    dropLevels=[], returnPD = False, sticky = False,
+                    symFilter = None):
         """
         Print table of values from Pandas Dataframe self.coeffs['DF']['real'], with specified labels (from self.coeffs['DF']['real'].attrs['indexes']).
 
@@ -708,6 +762,13 @@ class symHarm():
         sticky : bool, optional, default = False
             Apply "sticky" index styler to displayed table.
             (If supported by Pandas version.)
+
+        symFilter : str, optional, default = None
+            If set, try and filter output based on allowed symmetries.
+            This requires self.continuum to be set, and to match a column name for filtering.
+            E.g. 'Target'  will filter the Xlm table from self.continuum['allowed']['PD']['Target'] symmetries.
+
+            TODO: allow use of short names here, currently only filters on output names.
 
 
         Returns
@@ -750,6 +811,15 @@ class symHarm():
 #         test = self.coeffDF.copy()   # Display as is
         test = inputData   # With unstack and fillna
         test.index.rename(names = newNames, inplace=True)
+
+        if symFilter is not None:
+            if hasattr(self, 'continuum'):
+                subsetMask = test.index.get_level_values(test.index.names[0]).isin(self.continuum['allowed']['PD'].index.get_level_values(symFilter))
+                # subsetMask = test.index.get_level_values(newNames[0]).isin(self.continuum['allowed']['PD'].index.get_level_values(symFilter))
+                test = test[subsetMask]
+            else:
+                print(f"*** Cannot filter on symmetry without self.continuum, run self.directProductContinuum() to generate.")
+
 
         if returnPD:
             return test
