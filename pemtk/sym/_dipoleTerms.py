@@ -5,6 +5,8 @@ Compute dipole terms and allowed product functions for libmsym and symmetrized h
 
 """
 from copy import deepcopy
+import xarray as xr
+
 from epsproc import multiDimXrToPD, matEleSelector
 from ._util import toePSproc
 
@@ -123,8 +125,11 @@ def allowedProductsTable(self):
     # prodTerms.applymap(lambda x: True if (dipSym.ctx.character_table.symmetry_species[0].name in x) else False)
     prodValid = prodTerms.applymap(lambda x: True if (self.irreps[0] in x) else False)
 
+    # Drop other terms?
+    prodValid = prodValid.where(prodValid).dropna(how='all').fillna('')
+
     # List of tuples of valid (C,dip) pairs
-    dipContList = prodValid[prodValid > 0 ].stack().index.tolist()
+    dipContList = prodValid[prodValid == True ].stack().index.tolist()
 
     # return dipContList, prodTerms, prodValid
     self.dipole.update({'dipContList':dipContList, 'prodTerms':prodTerms, 'prodValid':prodValid})
@@ -174,7 +179,7 @@ def assignSymMuTerms(self, keyDim = 'Cont',    # targSym = None,
     muList = []
     testDS = self.coeffs[dataType].copy()
     for k,v in mMapping.items():
-        muXR = testDS.where(testDS.coords[dim] == k, drop=True)
+        muXR = testDS.where(testDS.coords[keyDim] == k, drop=True)
 
         if len(v['m']) > 1:
             muXR0 = muXR.copy()
@@ -189,12 +194,12 @@ def assignSymMuTerms(self, keyDim = 'Cont',    # targSym = None,
             muList.extend([muXR.copy()])
 
     testMuMerge = xr.merge(muList)  # THIS MIGHT BE OK, not sure yet...
-    mergePD, _ = multiDimXrToPD(testMuMerge['b (comp)'], colDims = keyDims, thres=1e-4)
+    mergePD, _ = multiDimXrToPD(testMuMerge['b (comp)'], colDims = keyDim, thres=1e-4)
 
     self.coeffs[dataTypeOut] = {'XR':testMuMerge, 'PD':mergePD}
 
-    if verbose:
-        print(f"Assigned dipole-allowed terms for dim = {dim} to self.coeffs[dataTypeOut]")
+    if self.verbose:
+        print(f"Assigned dipole-allowed terms for dim = {keyDim} to self.coeffs[{dataTypeOut}]")
 
 
 def assignMissingSym(self, dim, values, dataType = 'matE', multiInd = 'Sym'):
@@ -224,7 +229,7 @@ def assignMissingSym(self, dim, values, dataType = 'matE', multiInd = 'Sym'):
     newDS = self.coeffs[dataType].copy()
 
     if isinstance(values, str):
-        newVals = newDS.coords[dim].str.replace('U',targSym).values   # OK
+        newVals = newDS.coords[dim].str.replace('U',values).values   # OK
     else:
         newVals = values
 

@@ -112,6 +112,7 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, sumDims = [], dataType = '
     daTest = daTest.rename(dimMap)  # Remap existing dims
 
     if verbose:
+        print(f"*** Mapping coeffs to ePSproc dataType = {dataType}")
         print(f'Remapped dims: {dimMap}')
 
     # Set refDims from ep dataTypes function
@@ -134,6 +135,8 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, sumDims = [], dataType = '
             # This works with existing lmplot routine OK
             if dim in ['Cont','Targ','Total','Type']:
                 daTest = daTest.expand_dims({dim: ['U']})
+            elif dim in ['Eke']:
+                daTest = daTest.expand_dims({dim: [0]})   # 17/04/23: keep Eke as 0 if not set
             else:
                 daTest = daTest.expand_dims({dim: [np.nan]})   # 17/04/23: modified unassigned dims to NaN.
                 # daTest = daTest.expand_dims({dim: [0]})
