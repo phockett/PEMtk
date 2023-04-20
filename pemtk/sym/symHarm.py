@@ -734,7 +734,7 @@ class symHarm():
     # Display table
     def displayXlm(self, names = 'longnames', YlmType = 'real', setCols = 'l',
                     dropLevels=[], returnPD = False, sticky = False,
-                    symFilter = None):
+                    symFilter = False, symFilterChannel = 'Target'):
         """
         Print table of values from Pandas Dataframe self.coeffs['DF']['real'], with specified labels (from self.coeffs['DF']['real'].attrs['indexes']).
 
@@ -763,8 +763,11 @@ class symHarm():
             Apply "sticky" index styler to displayed table.
             (If supported by Pandas version.)
 
-        symFilter : str, optional, default = None
-            If set, try and filter output based on allowed symmetries.
+        symFilter : bool, optional, default = False
+            If True, apply filter from symFilterChannel.
+
+        symFilterChannel : str, optional, default = None
+            Try and filter output based on allowed symmetries.
             This requires self.continuum to be set, and to match a column name for filtering.
             E.g. 'Target'  will filter the Xlm table from self.continuum['allowed']['PD']['Target'] symmetries.
 
@@ -812,9 +815,9 @@ class symHarm():
         test = inputData   # With unstack and fillna
         test.index.rename(names = newNames, inplace=True)
 
-        if symFilter is not None:
+        if symFilter:
             if hasattr(self, 'continuum'):
-                subsetMask = test.index.get_level_values(test.index.names[0]).isin(self.continuum['allowed']['PD'].index.get_level_values(symFilter))
+                subsetMask = test.index.get_level_values(test.index.names[0]).isin(self.continuum['allowed']['PD'].index.get_level_values(symFilterChannel))
                 # subsetMask = test.index.get_level_values(newNames[0]).isin(self.continuum['allowed']['PD'].index.get_level_values(symFilter))
                 test = test[subsetMask]
             else:

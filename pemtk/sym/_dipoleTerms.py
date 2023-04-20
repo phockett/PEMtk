@@ -199,7 +199,7 @@ def assignSymMuTerms(self, keyDim = 'Cont',    # targSym = None,
     self.coeffs[dataTypeOut] = {'XR':testMuMerge, 'PD':mergePD}
 
     if self.verbose:
-        print(f"Assigned dipole-allowed terms for dim = {keyDim} to self.coeffs[{dataTypeOut}]")
+        print(f"Assigned dipole-allowed terms for dim = '{keyDim}' to self.coeffs['{dataTypeOut}']")
 
 
 def assignMissingSym(self, dim, values, dataType = 'matE', multiInd = 'Sym'):
@@ -244,4 +244,4 @@ def assignMissingSym(self, dim, values, dataType = 'matE', multiInd = 'Sym'):
     self.coeffs[dataType] = newDS
 
     if self.verbose:
-        print(f"*** Updated self.coeffs[{dataType}] with new coords.")
+        print(f"*** Updated self.coeffs['{dataType}'] with new coords.")
