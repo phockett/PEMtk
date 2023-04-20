@@ -99,7 +99,7 @@ class symHarm():
     """
 
     from ._dipoleTerms import dipoleTermsSymHarm as dipoleTerms
-    from ._dipoleTerms import allowedProductsTable, assignSymMuTerms, assignMissingSym
+    from ._dipoleTerms import allowedProductsTable, assignSymMuTerms, assignMissingSym, assignMissingSymProd
 
     def __init__(self, PG = 'Cs', lmax = 4, llist = None, dims = ['C', 'h', 'mu', 'l', 'm']):
         """

@@ -6,6 +6,7 @@ Compute dipole terms and allowed product functions for libmsym and symmetrized h
 """
 from copy import deepcopy
 import xarray as xr
+import numpy as np
 
 from epsproc import multiDimXrToPD, matEleSelector
 from ._util import toePSproc
@@ -142,6 +143,7 @@ def assignSymMuTerms(self, keyDim = 'Cont',    # targSym = None,
     """
     Assign matrix elements from dipole-allowed symmetries, and associated mu values.
 
+    20/04/23 v2 - use self.continuum instead of basic direct product for assignments
     18/04/23 v1
 
     """
@@ -164,16 +166,27 @@ def assignSymMuTerms(self, keyDim = 'Cont',    # targSym = None,
 
     symTerms = self.coeffs[dataType].coords[keyDim].values
 
-    # Compute as direct products
-    # Basically already in self.dipole['prodValid']... so could use that instead...
-    for n, s1 in enumerate(symTerms):
-    # for n, s1 in enumerate(testDP):
-        for s,v in dipoleTerms.items():
-            testAllowed[(s1,s)] = {'directProd':self.directProduct(terms = [s1, s])}
-            testAllowed[(s1,s)]['allowed'] = True if self.irreps[0] in testAllowed[(s1,s)]['directProd'] else False
+# v1
+#     # Compute as direct products
+#     # Basically already in self.dipole['prodValid']... so could use that instead...
+#     for n, s1 in enumerate(symTerms):
+#     # for n, s1 in enumerate(testDP):
+#         for s,v in dipoleTerms.items():
+#             testAllowed[(s1,s)] = {'directProd':self.directProduct(terms = [s1, s])}
+#             testAllowed[(s1,s)]['allowed'] = True if self.irreps[0] in testAllowed[(s1,s)]['directProd'] else False
 
-            if testAllowed[(s1,s)]['allowed']:
-                mMapping[s1] = v
+#             if testAllowed[(s1,s)]['allowed']:
+#                 mMapping[s1] = v
+
+#********** v2 - use self.continuum
+    testAllowed = self.continuum['dict']
+
+    for k,v in testAllowed.items():
+        # print(v)
+        if v['allowed']:
+            mMapping[v['targSym']] = v
+
+#**********
 
     # Set mu axis correctly...
     muList = []
@@ -245,3 +258,76 @@ def assignMissingSym(self, dim, values, dataType = 'matE', multiInd = 'Sym'):
 
     if self.verbose:
         print(f"*** Updated self.coeffs['{dataType}'] with new coords.")
+
+
+def assignMissingSymProd(self, dim = 'Total', dataType = 'matE', multiIndName = 'Sym'):
+    """
+    Assign missing symmetry label as direct product of other existing labels.
+
+    For a given dimension, assign values from other dims of the same multiindex set.
+
+    Default case uses dim = 'Total', dataType = 'matE', multiIndName = 'Sym'.
+    Sym contains dims 'Sym': ['Cont', 'Targ', 'Total']
+    (See ep.dataTypesList())
+
+    """
+
+    # Check dims?
+    # ep.util.misc.checkDims
+    # ep.dataTypesList()
+
+    # Assume dims...?
+    # dims = ep.util.listFuncs.getRefDims(dipSym.coeffs[dataType])
+    dims = set(self.coeffs[dataType].indexes[multiIndName].names) - {dim}  # Get dims from set
+
+    # Case for symAllowed only
+    # cont = dipSym.coeffs['symAllowed']['XR'].indexes['Sym'].get_level_values('Cont')
+    # targ = dipSym.coeffs['symAllowed']['XR'].indexes['Sym'].get_level_values('Targ')
+
+    # Assign all cases
+    # This is OK, but may want to iterate over each set instead to allow >2 later...?
+    symsInput = {}
+    symsList = []
+    for d in dims:
+        symsInput[d] = self.coeffs[dataType].indexes[multiIndName].get_level_values(d)
+
+        symsList.append(list(symsInput[d]))
+
+    # Use np.array to handle arb sets and transpose
+    prodList = np.array(symsList).T
+
+#     symsInput = {}
+#     symsList = []
+
+#     d1 = self.coeffs[dataType].indexes[multiIndName].get_level_values(dims[0])
+#     for n,item in enumerate(d1):
+#         for d in dims:
+#             symsInput[d] = self.coeffs[dataType].indexes[multiIndName].get_level_values(d)
+
+    # targ = dipSym.coeffs[dataType].indexes['Sym'].get_level_values('Targ')
+
+
+    # for item in dipSym.coeffs['symAllowed']['XR'].indexes['Sym']:
+    #     # print(item[1])
+    #     newList.append([*item]).str.replace('U','test')
+    #     # newList.append(
+
+
+    # return symsInput, symsList
+
+    directProdDict = {}
+    directProdList = []
+
+    for n,item in enumerate(prodList):
+        directProd = self.directProduct(terms = item)
+        # newDict[n] = {'cont':cont[n], 'targ':targ[n], 'prod':directProd}
+        directProdDict[n] = {'Terms':item, 'Product':directProd}
+        directProdList.append(directProd[0])
+
+        if len(directProd) > 1:
+            print(f"Found multiple products for {' x '.join(item)} = {directProd}; assigning '{dim}' as {directProd[0]}.")
+        else:
+            print(f"Assigned '{dim}' from {' x '.join(item)} = {directProd}")
+
+
+    self.assignMissingSym(dim,directProdList)  # Assign dim with list
