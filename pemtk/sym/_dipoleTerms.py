@@ -179,7 +179,12 @@ def assignSymMuTerms(self, keyDim = 'Cont',    # targSym = None,
 #                 mMapping[s1] = v
 
 #********** v2 - use self.continuum
-    testAllowed = self.continuum['dict']
+    if hasattr(self,'continuum'):
+        testAllowed = self.continuum['dict']
+    else:
+        print(f"*** self.continuum not set, skipping mu assignments. Run self.directProductContinuum() to set allowed dipole terms.")
+
+        return None
 
     for k,v in testAllowed.items():
         # print(v)
@@ -207,6 +212,7 @@ def assignSymMuTerms(self, keyDim = 'Cont',    # targSym = None,
             muList.extend([muXR.copy()])
 
     testMuMerge = xr.merge(muList)  # THIS MIGHT BE OK, not sure yet...
+    testMuMerge.coords['mu'] = testMuMerge.coords['mu'].astype(int)  # Force coords to int.
     mergePD, _ = multiDimXrToPD(testMuMerge['b (comp)'], colDims = keyDim, thres=1e-4)
 
     self.coeffs[dataTypeOut] = {'XR':testMuMerge, 'PD':mergePD}
@@ -265,6 +271,22 @@ def assignMissingSymProd(self, dim = 'Total', dataType = 'matE', multiIndName = 
     Assign missing symmetry label as direct product of other existing labels.
 
     For a given dimension, assign values from other dims of the same multiindex set.
+
+    Parameters
+    ----------
+    dim : str, default = 'Total'
+        Dimension to replace, from matE dataType.
+        For usual matrix elements definition this can be ['Cont','Targ','Total']
+
+    dataType : str, optional, default = 'matE'
+        DataType to use, from self.coeffs[dataType]
+        Must correspond to Xarray variable with multiInd present.
+
+    multiIndName : str, optional, default = 'Sym'
+        MultiIndex containing levels to replace.
+
+    Notes
+    -----
 
     Default case uses dim = 'Total', dataType = 'matE', multiIndName = 'Sym'.
     Sym contains dims 'Sym': ['Cont', 'Targ', 'Total']
