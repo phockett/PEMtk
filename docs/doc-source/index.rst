@@ -67,6 +67,7 @@ Other topics
 
    sym/pemtk_symHarm_demo_160322_tidy
    sym/pemtk_symHarm_epsproc-interface_demo_240322
+   sym/working_with_symmetry_PEMtk_notes_180423-v210423_tidy
 
 
 .. toctree::
