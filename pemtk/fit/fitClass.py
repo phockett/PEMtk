@@ -36,6 +36,7 @@ from pemtk.util.env import isnotebook
 from epsproc import matEleSelector, multiDimXrToPD, setADMs, setPolGeoms
 from epsproc.geomFunc import afblmXprod, mfblmXprod
 from epsproc.sphPlot import plotTypeSelector
+from epsproc.util.setMatE import setMatE
 
 # Set HTML output style for Xarray in notebooks (optional), may also depend on version of Jupyter notebook or lab, or Xr
 # See http://xarray.pydata.org/en/stable/generated/xarray.set_options.html
@@ -256,7 +257,13 @@ class pemtkFit(dataClass):
             self.data[keyExpt]['weights'] = 1/(self.data[keyExpt]['weights']**2)
 
 
+    def setMatE(self, **kwargs):
+        """Thin wrapper for ep.setMatE.setMatE(), pass args & set returns to self.data['matE']"""
 
+        matE = setMatE(**kwargs)
+
+        # self.ADM = {'ADMX':ADMX, **kwargs}
+        self.data['matE'] = {'matE':matE}  # Set in main data structure
 
 
 
