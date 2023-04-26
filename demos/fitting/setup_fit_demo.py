@@ -15,11 +15,13 @@ parser = argparse.ArgumentParser(description='Setup fitting workspace with modul
 parser.add_argument("modPathDefault", nargs='?', default=None, type=str, help='Module path (optional, positional) - deprecated, use -m flag for preference.')
 parser.add_argument("-d", "--dataPath", type=str, help='Data path. Defaults to module path if not set.')
 parser.add_argument("-m", "--modPathName", type=str, help='Module path (optional).')
+parser.add_argument("-a", "--admFileName", type=str, help='Data file for ADMs (in dataPath).')
 args = parser.parse_args()
 # print(args)
 
 modPath = args.modPathName if args.modPathName else args.modPathDefault
 dataPath = args.dataPath if args.dataPath else None
+admFile = args.admFileName if args.admFileName else None
 # print(f"Using input module path {modPath}, data path {dataPath}.")
 
 # A few standard imports...
@@ -82,9 +84,11 @@ except ImportError as e:
 # if len(args) > 2:
 if dataPath:
     epDemoDataPath = Path(dataPath)
+    epDemoDataFlag = False
 else:
     # Note this is set here from ep.__path__, but may not be correct in all cases - depends on where the Github repo is.
     epDemoDataPath = Path(ep.__path__[0]).parent/'data'
+    epDemoDataFlag = True
 
 
 
@@ -118,9 +122,10 @@ ep.plot.hvPlotters.setPlotters()
 # Note this is set here from ep.__path__, but may not be correct in all cases.
 
 
-# Multiorb data
-dataPath = os.path.join(epDemoDataPath, 'photoionization', 'n2_multiorb')
-# dataPath = Path(epDemoDataPath, 'photoionization', 'n2_multiorb')
+# Multiorb data for normal module path
+if epDemoDataFlag:
+    dataPath = os.path.join(epDemoDataPath, 'photoionization', 'n2_multiorb')
+    # dataPath = Path(epDemoDataPath, 'photoionization', 'n2_multiorb')
 
 print(f'\n* Loading demo matrix element data from {dataPath}')
 
@@ -143,7 +148,18 @@ data.setADMs()
 # Load time-dependent ADMs for N2 case
 # Adapted from ePSproc_AFBLM_testing_010519_300719.m
 from scipy.io import loadmat
-ADMdataFile = os.path.join(epDemoDataPath, 'alignment', 'N2_ADM_VM_290816.mat')
+
+# Set ADM data file
+defaultN2ADMs = False
+if not admFileName:
+    admFileName = 'N2_ADM_VM_290816.mat'
+    defaultN2ADMs = True
+
+if epDemoDataFlag:
+    ADMdataFile = os.path.join(epDemoDataPath, 'alignment', admFileName)
+else:
+    ADMdataFile = os.path.join(epDemoDataPath, admFileName)
+
 
 print(f'\n\n* Loading demo ADM data from {ADMdataFile}...')
 
@@ -153,10 +169,11 @@ except FileNotFoundError:
     print("\n*** ADM data file not found. Setup script will abort.")
     sys.exit()
 
-# Set tOffset for calcs, 3.76ps!!!
-# This is because this is 2-pulse case, and will set t=0 to 2nd pulse (and matches defn. in N2 experimental paper)
-tOffset = -3.76
-ADMs['time'] = ADMs['time'] + tOffset
+if defaultN2ADMs:
+    # Set tOffset for calcs, 3.76ps!!!
+    # This is because this is 2-pulse case, and will set t=0 to 2nd pulse (and matches defn. in N2 experimental paper)
+    tOffset = -3.76
+    ADMs['time'] = ADMs['time'] + tOffset
 
 data.setADMs(ADMs = ADMs['ADM'], t=ADMs['time'].squeeze(), KQSLabels = ADMs['ADMlist'], addS = True)
 data.data['ADM']['ADM']
