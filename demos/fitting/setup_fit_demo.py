@@ -21,7 +21,7 @@ args = parser.parse_args()
 
 modPath = args.modPathName if args.modPathName else args.modPathDefault
 dataPath = args.dataPath if args.dataPath else None
-admFile = args.admFileName if args.admFileName else None
+admFileName = args.admFileName if args.admFileName else None
 # print(f"Using input module path {modPath}, data path {dataPath}.")
 
 # A few standard imports...
