@@ -297,7 +297,8 @@ class symHarm():
                 dipDictOut[(s,s2)]['targSym'] = s2
                 dipDictOut[(s,s2)]['result'] = rList.copy()
                 # dipDict[s]['valid'] = [k for k in rDict.keys() if k == 'A1g'] # self.irreps[0]]
-                dipDictOut[(s,s2)]['allowed'] = True if 'A1g' in rList else False
+                # dipDictOut[(s,s2)]['allowed'] = True if 'A1g' in rList else False
+                dipDictOut[(s,s2)]['allowed'] = True if self.irreps[0] in rList else False  # Allowed terms contain totally symmetric rep.
                 dipDictOut[(s,s2)]['terms'] = terms
                 # dipDict[s].update(dipoleDict[s])
 

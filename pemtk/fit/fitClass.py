@@ -358,6 +358,7 @@ class pemtkFit(dataClass):
 
         matE : Xarray
             Input set of matrix elements, used to set allowed (l,m,mu) and input parameters.
+            If not passed, use self.data[self.subKey]['matE'].
 
         paramsCons : dict, optional, default = 'auto'
             Input dictionary of constraints (expressions) to be set for the parameters.
