@@ -244,7 +244,7 @@ def fitsReport(self, key = 'fits', dataDict = 'dfPF', thres = None, mask = True)
 
 
     13/09/22    Added more stats to output.
-    
+
     """
 
     # Set data subset, functional form - may already have better function elsewhere...?
@@ -1165,13 +1165,13 @@ def paramPlot(self, selectors = {'Type':'m'},
 
     # Create plot
     if self.sns and (backend == 'sns'):
-        g = self.sns.catplot(x=x, y=y, hue = hue, data = pDataLong)  # pGroups + scatter plot - this shows groupings better
+        g = self.sns.catplot(x=x, y=y, hue = hue, data = pDataLong, **kwargs)  # pGroups + scatter plot - this shows groupings better
         g.set_xticklabels(rotation=-60)
 
     elif self.hv and (backend == 'hv'):
         # Usually start with this, but can skip.
         if plotScatter:
-            g = self.hv.Scatter(pDataLong, kdims=x, vdims=[y,hue])   # For hv case need to include hue as vdims (or will be dropped). hv to PD class may be cleaner?
+            g = self.hv.Scatter(pDataLong, kdims=x, vdims=[y,hue], **kwargs)   # For hv case need to include hue as vdims (or will be dropped). hv to PD class may be cleaner?
             g.opts(color=hue, size=10, jitter=0.4, alpha=0.5, colorbar = True, cmap='coolwarm', legend_position = 'right')  # Some reasonable options, although should pass as **kwargs.
                                                                                                                             # NOTE: for cat data use legend_position = 'right' to force legend out of plot axes.
                                                                                                                             #       For numerical data the cbar appears correctly.
