@@ -621,6 +621,19 @@ class pemtkFit(dataClass):
             Force self.basis overwrite with updated values.
             NOT YET IMPLEMENTED
 
+        selDims = {}, thres = None, thresDims = 'Eke'
+            Selectors passed to backend.
+            TODO: should use global options here.
+
+        lmModelFlag : bool, optional, default=False
+            Output option for flat results structure for lmfit testing.
+
+        XSflag : bool, optional, default=True
+            Use absolute cross-section (XS) in fitting?
+            This is passed to backends as `BLMRenorm` flag.
+            If true, use passed B00(t) values in fit, and do not renormalise.
+            If false, renorm by B00(t), i.e. all values will be set to unity (B00(t)=1).
+
         weights : int, Xarray or np.array, optional, default = None
             Weights to use for residual calculation.
             - If set, return np.sqrt(weights) * residual. (Must match size of data along key dimension(s).)
@@ -643,7 +656,11 @@ class pemtkFit(dataClass):
                 data.afblmMatEfit(backend = ep.mfblmXprod) should be OK following `import epsproc as ep`
                 data.afblmMatEfit(backend = mfblmXprod) will fail
 
+        debug : bool, optional, default = False
+            Print additional debug output for testing.
 
+        **kwargs : optional
+            Additional args passed to backends.
 
         NOTE:
 
