@@ -330,7 +330,7 @@ class symHarm():
         19/02/24  v1
         
         """
-        print(f"Adding scattering symmetries for ion={symIon}"}
+        print(f"Adding scattering symmetries for ion={symIon}")
         
         scatSymList = []
         
