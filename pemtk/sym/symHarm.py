@@ -336,7 +336,7 @@ class symHarm():
         scatSymList = []
         
         # Use subselection only?
-        if pdInput = 'allowed':
+        if pdInput == 'allowed':
             pdInput = self.continuum['allowed']['PD']
         else:
             pdInput = self.continuum['PD']
