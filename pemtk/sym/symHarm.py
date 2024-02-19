@@ -321,7 +321,7 @@ class symHarm():
             display(pdCont.style.apply(lambda x: ['background-color : yellow']*x.shape[0] if x.allowed else ['background-color : lightgrey']*x.shape[0], axis = 1))   # One liner OK with axis set and mult. by cols.
 
             
-    def scatSym(self, symIon, disp = True):
+    def scatSym(self, symIon, pdInput = 'allowed', disp = True):
         """
         Add scattering symmetry column to self.continuum['allowed']['PD'].
         
@@ -332,18 +332,25 @@ class symHarm():
         """
         print(f"Adding scattering symmetries for ion={symIon}")
         
+        # Set vars
         scatSymList = []
+        
+        # Use subselection only?
+        if pdInput = 'allowed':
+            pdInput = self.continuum['allowed']['PD']
+        else:
+            pdInput = self.continuum['PD']
         
         # Basic version with loop using existing direct product.
         # Should redo as table lookup as directProduct case above?
-        for sym in self.continuum['allowed']['PD'].index.get_level_values(level='Target'):
+        for sym in pdInput.index.get_level_values(level='Target'):
             scatSymList.append(self.directProduct([symIon,sym]))
         
         # Append to main table
-        self.continuum['allowed']['PD']['scat'] = scatSymList
+        pdInput['scat'] = scatSymList
         
         if disp:
-            display(self.continuum['allowed']['PD'].style.apply(lambda x: ['background-color : yellow']*x.shape[0] if x.allowed else ['background-color : lightgrey']*x.shape[0], axis = 1))   # One liner OK with axis set and mult. by cols.
+            display(pdInput.style.apply(lambda x: ['background-color : yellow']*x.shape[0] if x.allowed else ['background-color : lightgrey']*x.shape[0], axis = 1))   # One liner OK with axis set and mult. by cols.
         
 
     #*********************** CONVERSION FUNCTIONS
