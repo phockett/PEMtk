@@ -162,6 +162,11 @@ def toePSman(scatSym = None, contSym = None):
     
         scatSym = symBasis.continuum['allowed']['scatList']
         contSym = symBasis.continuum['allowed']['targList']
+        
+    And see also epsman.esData.setePSinputs, which specifies:
+    # Symmetry pairs for ScatSym (==ion x electron symm) and ScatContSym (==electron symm), input file will loop through these
+    Ssym=({' '.join([item[0] for item in symList])})
+    Csym=({' '.join([item[1] for item in symList])})
 
     """
     
@@ -169,6 +174,7 @@ def toePSman(scatSym = None, contSym = None):
     # NOTE this fails for zip(sSym, cSym), need 1D list first?
 
     # [(x, z) for x, y in zip(sSym, cSym) for z in y]  # Fails
-    ePSSymList = [(x, z) for x, y in zip(contSym, scatSym) for z in y]  # OK?
+    # ePSSymList = [(x, z) for x, y in zip(contSym, scatSym) for z in y]  # OK? cSym first
+    ePSSymList = [(z, x) for x, y in zip(contSym, scatSym) for z in y]  # OK? sSym first
     
     return ePSSymList
