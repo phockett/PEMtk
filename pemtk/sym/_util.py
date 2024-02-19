@@ -152,3 +152,23 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, sumDims = [], dataType = '
     daTest.attrs['dataType'] = dataType
 
     return daTest
+
+
+def toePSman(scatSym = None, contSym = None):
+    """
+    Set ePSman style symList from (contSym,scatSym) items.
+    
+    For symHarm class, use class wrapper self.toePSman, which uses:
+    
+        scatSym = symBasis.continuum['allowed']['scatList']
+        contSym = symBasis.continuum['allowed']['targList']
+
+    """
+    
+    # 1 liner from https://stackoverflow.com/questions/43669505/zip-a-list-with-a-2d-list-in-python#comment74385822_43669505
+    # NOTE this fails for zip(sSym, cSym), need 1D list first?
+
+    # [(x, z) for x, y in zip(sSym, cSym) for z in y]  # Fails
+    ePSSymList = [(x, z) for x, y in zip(contSym, scatSym) for z in y]  # OK?
+    
+    return ePSSymList

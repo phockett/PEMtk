@@ -33,7 +33,7 @@ except:
     print("***Xarray not found, XR outputs not available.")
     xrFlag = False
 
-from ._util import prefixAxisTitles, listPGs, toePSproc
+from ._util import prefixAxisTitles, listPGs, toePSproc, toePSman
 from ._directProduct import directProductTable, diretProductFromList
 # from ._dipoleTerms import dipoleTerms, allowedProducts
 
@@ -349,6 +349,12 @@ class symHarm():
         # Append to main table
         pdInput['scat'] = scatSymList
         
+        # Add list to 'allowed' dict
+        self.continuum['allowed']['scatList'] = pdInput[pdInput.allowed == True ]['scat'].tolist()
+        
+        # Set ePSman symList
+        self.toePSman()
+        
         if disp:
             display(pdInput.style.apply(lambda x: ['background-color : yellow']*x.shape[0] if x.allowed else ['background-color : lightgrey']*x.shape[0], axis = 1))   # One liner OK with axis set and mult. by cols.
         
@@ -359,7 +365,22 @@ class symHarm():
         """Wrap toePSproc method."""
 
         self.coeffs[dataType] = toePSproc(self.coeffs, dimMap = dimMap, dataType = dataType, verbose = self.verbose)
+    
+    
+    def toePSman(self, scatSym = None, contSym = None):
+        """Wrap toePSman method."""
 
+        if scatSym is None:
+            scatSym = self.continuum['allowed']['scatList']
+        
+        if contSym is None:
+            contSym = self.continuum['allowed']['targList']
+        
+        ePSSymList = toePSman(scatSym, contSym)
+        
+        self.continuum['allowed']['ePSSymList']=ePSSymList
+
+        
     def getIrreps(self):
         """
         Get irrep labels from libmsym repr.
