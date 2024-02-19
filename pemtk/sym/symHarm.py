@@ -320,6 +320,31 @@ class symHarm():
         if disp:
             display(pdCont.style.apply(lambda x: ['background-color : yellow']*x.shape[0] if x.allowed else ['background-color : lightgrey']*x.shape[0], axis = 1))   # One liner OK with axis set and mult. by cols.
 
+            
+    def scatSym(self, symIon, disp = True):
+        """
+        Add scattering symmetry column to self.continuum['allowed']['PD'].
+        
+        scatSym = continuum x ion (per ePS definition)
+        
+        19/02/24  v1
+        
+        """
+        print(f"Adding scattering symmetries for ion={symIon}"}
+        
+        scatSymList = []
+        
+        # Basic version with loop using existing direct product.
+        # Should redo as table lookup as directProduct case above?
+        for sym in self.continuum['allowed']['PD'].index.get_level_values(level='Target'):
+            scatSymList.append(self.directProduct([symIon,sym]))
+        
+        # Append to main table
+        self.continuum['allowed']['PD']['scat'] = scatSymList
+        
+        if disp:
+            display(self.continuum['allowed']['PD'].style.apply(lambda x: ['background-color : yellow']*x.shape[0] if x.allowed else ['background-color : lightgrey']*x.shape[0], axis = 1))   # One liner OK with axis set and mult. by cols.
+        
 
     #*********************** CONVERSION FUNCTIONS
 
