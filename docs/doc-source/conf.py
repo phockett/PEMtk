@@ -55,7 +55,8 @@ release = version
 # See https://github.com/spatialaudio/nbsphinx/issues/24
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
                 'sphinxcontrib.apidoc', 'recommonmark',
-                'sphinx.ext.viewcode', 'nbsphinx']
+                'sphinx.ext.viewcode', 'nbsphinx',
+                'autoapi.extension']   # 26/03/24 testing autoapi
                 # 'IPython.sphinxext.ipython_console_highlighting']  # Actually this throws an error on RTD - try adding ipyhton to requirements.txt instead...
 
 # api doc settings
@@ -63,6 +64,9 @@ apidoc_module_dir = '../../pemtk'
 apidoc_output_dir = 'modules'
 apidoc_excluded_paths = ['tests']
 apidoc_separate_modules = True
+
+# 26/03/24 testing autoapi, https://github.com/readthedocs/sphinx-autoapi
+autoapi_dirs = '../../pemtk'
 
 # Sphinx-autodoc mock imports for minimal build-chain.
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_mock_imports
