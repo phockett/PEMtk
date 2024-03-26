@@ -13,8 +13,8 @@ authors:
     orcid: 'https://orcid.org/0000-0001-9561-8433'
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.10044679
-    description: Zenodo release (QM3 book version)
+    value: 10.5281/zenodo.10882996
+    description: Zenodo archive
 repository-code: 'https://github.com/phockett/PEMtk'
 url: 'https://pemtk.readthedocs.io'
 abstract: >-

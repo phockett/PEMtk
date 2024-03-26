@@ -1,6 +1,8 @@
 PEMtk: the Photoelectron Metrology Toolkit
 ==========================================
 
+|zenodo|
+
 (aka Quantum Metrology with Photoelectrons platform data & analysis
 layer: the unifiying layer (glue) for the platform)
 
@@ -70,7 +72,9 @@ Docker builds are available as follows:
 Roadmap
 -------
 
-- Further fitting methodology & code developments.
+- Further fitting methodology & code developments
+  - Faster fitting, GPU fitting etc.
+  - Implementation of matrix techniques (see Gregory, M. et al. (2021) ‘Towards molecular frame photoelectron angular distributions in polyatomic molecules from lab frame coherent rotational wavepacket evolution’, Journal of Physics B: Atomic, Molecular and Optical Physics, 54(14), p. 145601. Available at: https://doi.org/10.1088/1361-6455/ac135f.)
 - Integrated data handling class(es).
 - Image processing (basic inversions, tomography, FT methods etc.).
 - Image simulation.
@@ -88,18 +92,24 @@ Cite the software directly via the Github repository for the software - use the 
   @software{hockett2021PEMtkGithub,
     title = {Photoelectron Metrology Toolkit (PEMtk) Github Repository},
     author = {Hockett, Paul},
-    year = {2021},
+    year = {2024},
     url = {https://github.com/phockett/PEMtk},
     urldate = {2022-02-18},
-    DOI={10.5281/zenodo.10044679},
+    DOI={10.5281/zenodo.10882996},
     publisher={Github},
     abstract = {Quantum Metrology with Photoelectrons platform data \& analysis layer - the unifiying layer (glue) for the platform. Main capabilities are development of fitting/retrieving continuum wavefunctions from experimental data; handling multi-dimensional datasets; facilitating comparison of ab initio results with experimental data.},
     keywords = {Repo,Software},
     commit = {788329b82911b2a0690323c64116aa6d19537ecc},
   }
 
-(For specific releases and commits, see https://github.com/phockett/PEMtk/releases and https://github.com/phockett/PEMtk/commits/master/.)
+(For specific releases and commits, see https://github.com/phockett/PEMtk/releases and https://github.com/phockett/PEMtk/commits/master/, and the archived versions can also be found on Zenodo: |zenodo|.)
 
 ... or the book `Quantum Metrology with Photoelectrons Vol. 3 (2023) <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/intro.html>`__ and/or the manuscript `Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2023) <https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data>`__ paper. Both include discussion and numerical demos using the software (release v0.0.1-dev), and are available in various flavours online, see the included `CITATION.bib` for citation details and options.
 
 (Citation styles for software `from StackExchange <https://academia.stackexchange.com/questions/14010/how-do-you-cite-a-github-repository>`_.)
+
+
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.10882996.svg
+    :alt: Zenodo archive
+    :scale: 100%
+    :target: https://zenodo.org/badge/DOI/10.5281/zenodo.10882996
