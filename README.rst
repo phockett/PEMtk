@@ -24,6 +24,18 @@ As of late 2023, full modelling and fitting of AF and MF observables is implemen
 
    QM Platform schematic
 
+https://github.com/phockett/PEMtk/blob/master/docs/doc-source/figs/MFPADs_N2_recon_demo_2023.png
+
+.. figure:: https://raw.githubusercontent.com/phockett/PEMtk/0a40bf2b38cff8187b2265094b4d7d0e8c8ee17e/docs/doc-source/figs/MFPADs_N2_recon_demo_2023.png
+  :alt: MFPAD reconstruction demo
+
+  MFPAD reconstruction demo for N2, see `Quantum Metrology with Photoelectrons Vol. 3 <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/part2/case-study-N2_290723.html#plot-mf-pads>`__ for details.
+
+.. figure:: https://raw.githubusercontent.com/phockett/PEMtk/0a40bf2b38cff8187b2265094b4d7d0e8c8ee17e/docs/doc-source/figs/denMat_N2_recon_demo_2023.png
+  :alt: Density matrix reconstruction demo
+
+  Density matrix reconstruction demo for N2, see `Quantum Metrology with Photoelectrons Vol. 3 <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/part2/case-study-N2_290723.html#density-matrices>`__ for details.
+
 
 Currently implemented (v0.0.1)
 ------------------------------
