@@ -1,0 +1,72 @@
+# CFF citations.
+# Resources:
+#   - Github docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-citation-files
+#   - Quick guide: https://citation-file-format.github.io/
+#   - Schema: https://github.com/citation-file-format/citation-file-format/blob/main/schema-guide.md
+#   - Online composition/testing tool: https://citation-file-format.github.io/cff-initializer-javascript
+#
+#cff-version: 1.2.0
+#message: "If you use this software, please cite it as below."
+#authors:
+#- family-names: "Hockett"
+#  given-names: "Paul"
+#  orcid: "https://orcid.org/0000-0001-9561-8433"
+#title: "PEMtk: the Photoelectron Metrology Toolkit"
+#version: 0.0.1
+#doi: 10.5281/zenodo.10044679
+#date-released: 2024-03-26
+#url: "https://github.com/phockett/PEMtk"
+#
+#preferred-citation:
+#  type: book
+#  authors:
+#  - family-names: "Hockett"
+#    given-names: "Paul"
+#    orcid: "https://orcid.org/0000-0001-9561-8433"
+#  - family-names: "Makhija"
+#    given-names: "Varun"
+#    orcid: "https://orcid.org/0000-0002-4975-4888"
+#  doi: "10.5281/zenodo.10044679"
+#  title: "Quantum Metrology with Photoelectrons Vol. 3: Analysis methodologies"
+#  year: 2023
+
+
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: 'PEMtk: the Photoelectron Metrology Toolkit'
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Paul
+    family-names: Hockett
+    orcid: 'https://orcid.org/0000-0001-9561-8433'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.10044679
+    description: Zenodo release (QM3 book version)
+repository-code: 'https://github.com/phockett/PEMtk'
+url: 'https://pemtk.readthedocs.io'
+abstract: >-
+  Quantum Metrology with Photoelectrons platform data &
+  analysis layer: matrix element extraction, fitting and data
+  analysis tools.
+license: GPL-3.0
+commit: 788329b82911b2a0690323c64116aa6d19537ecc
+version: 0.0.1
+date-released: '2024-03-26'
+preferred-citation:
+  type: book
+  authors:
+  - family-names: "Hockett"
+    given-names: "Paul"
+    orcid: "https://orcid.org/0000-0001-9561-8433"
+  - family-names: "Makhija"
+    given-names: "Varun"
+    orcid: "https://orcid.org/0000-0002-4975-4888"
+  doi: "10.5281/zenodo.10044679"
+  title: "Quantum Metrology with Photoelectrons Vol. 3: Analysis methodologies"
+  year: 2023
