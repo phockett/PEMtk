@@ -58,15 +58,16 @@ license: GPL-3.0
 commit: 788329b82911b2a0690323c64116aa6d19537ecc
 version: 0.0.1
 date-released: '2024-03-26'
-preferred-citation:
-  type: book
-  authors:
-  - family-names: "Hockett"
-    given-names: "Paul"
-    orcid: "https://orcid.org/0000-0001-9561-8433"
-  - family-names: "Makhija"
-    given-names: "Varun"
-    orcid: "https://orcid.org/0000-0002-4975-4888"
-  doi: "10.5281/zenodo.10044679"
-  title: "Quantum Metrology with Photoelectrons Vol. 3: Analysis methodologies"
-  year: 2023
+
+#preferred-citation:
+#  type: book
+#  authors:
+#  - family-names: "Hockett"
+#    given-names: "Paul"
+#    orcid: "https://orcid.org/0000-0001-9561-8433"
+#  - family-names: "Makhija"
+#    given-names: "Varun"
+#    orcid: "https://orcid.org/0000-0002-4975-4888"
+#  doi: "10.5281/zenodo.10044679"
+#  title: "Quantum Metrology with Photoelectrons Vol. 3: Analysis methodologies"
+#  year: 2023
