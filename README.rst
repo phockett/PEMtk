@@ -112,4 +112,4 @@ Cite the software directly via the Github repository for the software - use the 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.10882996.svg
     :alt: Zenodo archive
     :scale: 100%
-    :target: https://zenodo.org/badge/DOI/10.5281/zenodo.10882996
+    :target: https://doi.org/10.5281/zenodo.10882996
