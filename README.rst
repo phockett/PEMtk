@@ -63,7 +63,7 @@ Docker
 
 Docker builds are available as follows:
 
-- `Full image build via Dockerhub for the QM3 book (Aug 2023) <https://hub.docker.com/r/epsproc/quantum-met-vol3>__`. For usage details see the `QM3 Docker builds notes <https://github.com/phockett/Quantum-Metrology-with-Photoelectrons-Vol3#docker-builds>`__. (Also available `via Zenodo DOI:10.5281/zenodo.8286020 <https://doi.org/10.5281/zenodo.8286020>`__.)
+- `Full image build via Dockerhub for the QM3 book (Aug 2023) <https://hub.docker.com/r/epsproc/quantum-met-vol3>`__. For usage details see the `QM3 Docker builds notes <https://github.com/phockett/Quantum-Metrology-with-Photoelectrons-Vol3#docker-builds>`__. (Also available `via Zenodo DOI:10.5281/zenodo.8286020 <https://doi.org/10.5281/zenodo.8286020>`__.)
 - Source Dockerfiles for ePSproc + PEMtk builds from `the Open Photoionization Docker Stacks <https://github.com/phockett/open-photoionization-docker-stacks/tree/main/epsproc-pemtk>`__.
 
 
