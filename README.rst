@@ -24,12 +24,12 @@ As of late 2023, full modelling and fitting of AF and MF observables is implemen
 
    QM Platform schematic
 
-https://github.com/phockett/PEMtk/blob/master/docs/doc-source/figs/MFPADs_N2_recon_demo_2023.png
 
 .. figure:: https://raw.githubusercontent.com/phockett/PEMtk/0a40bf2b38cff8187b2265094b4d7d0e8c8ee17e/docs/doc-source/figs/MFPADs_N2_recon_demo_2023.png
   :alt: MFPAD reconstruction demo
 
   MFPAD reconstruction demo for N2, see `Quantum Metrology with Photoelectrons Vol. 3 <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/part2/case-study-N2_290723.html#plot-mf-pads>`__ for details.
+
 
 .. figure:: https://raw.githubusercontent.com/phockett/PEMtk/0a40bf2b38cff8187b2265094b4d7d0e8c8ee17e/docs/doc-source/figs/denMat_N2_recon_demo_2023.png
   :alt: Density matrix reconstruction demo
@@ -37,12 +37,13 @@ https://github.com/phockett/PEMtk/blob/master/docs/doc-source/figs/MFPADs_N2_rec
   Density matrix reconstruction demo for N2, see `Quantum Metrology with Photoelectrons Vol. 3 <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/part2/case-study-N2_290723.html#density-matrices>`__ for details.
 
 
+
 Currently implemented (v0.0.1)
 ------------------------------
 
-- `Symmetrized harmonics generation functions (March 2022) <https://pemtk.readthedocs.io/en/latest/sym/pemtk_symHarm_demo_160322_tidy.html>`__.
-- `Fitting analysis functions and plotters (Dec. 2021) <https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_multiproc_class_analysis_141121-tidy.html>`__.
-- Basic data model (from `ePSproc base class <https://epsproc.readthedocs.io/en/latest/demos/ePSproc_class_demo_161020.html>`__ currently) and `fitting class (20/05/21) + docs <https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_basic_demo_030621-full.html>`__.
+- `Symmetrized harmonics generation functions (March 2022) <https://pemtk.readthedocs.io/en/latest/sym/pemtk_symHarm_demo_160322_tidy.html>`__. (Requires `libmsym <https://github.com/mcodev31/libmsym>`__.)
+- `Fitting analysis functions and plotters (Dec. 2021) <https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_multiproc_class_analysis_141121-tidy.html>`__. (Requires `lmfit <https://lmfit.github.io/lmfit-py/intro.html>`__.)
+- Basic data model (from `ePSproc base class <https://epsproc.readthedocs.io/en/latest/demos/ePSproc_class_demo_161020.html>`__ currently) and `fitting class (20/05/21) + docs <https://pemtk.readthedocs.io/en/latest/fitting/PEMtk_fitting_basic_demo_030621-full.html>`__. (Requires `ePSproc <https://epsproc.readthedocs.io>`__.)
 - Code framework and notes (August 2020).
 
 A full demonstration can be found in `Quantum Metrology with Photoelectrons Vol. 3 <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/intro.html>`__, which made use of the `v0.0.1-dev release of the codebase (Aug 2023) <https://github.com/phockett/PEMtk/releases/tag/v0.0.1-dev-QM3-310723>`__.
@@ -69,8 +70,13 @@ Or from setup.py (from clone dir)
 
 Notes
 
+* The dev version doesn't force any dependencies upon installation, but most functionality depends on `ePSproc` and required packages, which can be installed via pip or manually, see `ePSproc installation notes <https://epsproc.readthedocs.io/en/latest/about.html#installation-python>`__. Some optional packages may require further installation efforts, see the `scripts included in the Docker builds for recipes <https://github.com/phockett/open-photoionization-docker-stacks/tree/main/epsproc-pemtk>`__.
 * The repo can be passed directly to pip, e.g. ``pip install git+https://github.com/phockett/PEMtk.git``, see `notes in the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#git>`_.
 * Note that ``pip -e`` is for 'editable', and requires the source dir to remain, but the installation is also editable, `see notes here <https://stackoverflow.com/questions/41535915/python-pip-install-from-local-dir>`_. Alternatively, use ``pip install <path_to_local_pkg>``.
+
+
+TODO: tidy-up build/install chain.
+
 
 Docker
 ------
@@ -116,7 +122,34 @@ Cite the software directly via the Github repository for the software - use the 
 
 (For specific releases and commits, see https://github.com/phockett/PEMtk/releases and https://github.com/phockett/PEMtk/commits/master/, and the archived versions can also be found on Zenodo: |zenodo|.)
 
-... or the book `Quantum Metrology with Photoelectrons Vol. 3 (2023) <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/intro.html>`__ and/or the manuscript `Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2023) <https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data>`__ paper. Both include discussion and numerical demos using the software (release v0.0.1-dev), and are available in various flavours online, see the included `CITATION.bib` for citation details and options.
+... or the book `Quantum Metrology with Photoelectrons Vol. 3 (2023) <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/intro.html>`__ and/or the manuscript `Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2023) <https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data>`__ paper. Both are available in HTML versions with interactive figures (as linked above), and other forms online, and include discussion and numerical demos using the software (release v0.0.1-dev); see the included `CITATION.bib <https://github.com/phockett/PEMtk/blob/master/CITATION.bib>`__ for additional citation details and options.::
+
+  @book{hockett2023QuantumMetrologyPhotoelectronsIOP,
+    title = {Quantum Metrology with Photoelectrons, Volume 3: Analysis Methodologies},
+    author = {Hockett, Paul and Makhija, Varun},
+    year = {2023},
+    month = dec,
+    publisher = {IOP Publishing},
+    doi = {10.1088/978-0-7503-5022-8},
+    url = {https://iopscience.iop.org/book/mono/978-0-7503-5022-8},
+    isbn = {978-0-7503-5022-8},
+  }
+
+  @article{hockett2023TopicalReviewExtracting,
+    title = {Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data},
+    author = {Hockett, Paul and Makhija, Varun},
+    year = {2023},
+    month = may,
+    journal = {Journal of Physics B: Atomic, Molecular and Optical Physics},
+    volume = {56},
+    number = {11},
+    eprint = {2209.04301},
+    pages = {112001},
+    publisher = {IOP Publishing},
+    issn = {0953-4075},
+    doi = {10.1088/1361-6455/acd03e},
+    url = {https://dx.doi.org/10.1088/1361-6455/acd03e},
+  }
 
 (Citation styles for software `from StackExchange <https://academia.stackexchange.com/questions/14010/how-do-you-cite-a-github-repository>`_.)
 
