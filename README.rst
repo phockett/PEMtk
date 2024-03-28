@@ -3,9 +3,9 @@ PEMtk: the Photoelectron Metrology Toolkit
 
 |zenodo|
 
-Toolkit for photoelectron metrology, data & analysis layer.
+*Toolkit for photoelectron metrology, data & analysis layer.*
 
-Status: as of late 2023, full modelling and fitting of LF, AF and MF observables is implemented, and released as v0.0.1 of the package. Note this is still beta code however, and in active development.
+Status: as of late 2023, full modelling and fitting of LF, AF and MF observables is implemented, and `released as v0.0.1 of the package <https://github.com/phockett/PEMtk/releases/tag/v0.0.1-260324>`__. Note this is still beta code however, and in active development.
 
 For details see:
 
@@ -13,7 +13,7 @@ For details see:
 2. `Quantum Metrology with Photoelectrons Vol. 3 <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/intro.html>`__ - open source book covering the theory and numerical implementation in detail, including Jupyter notebooks and full numerical examples of matrix element retrieval for three demonstration cases (N2, OCS, C2H4), using `v0.0.1-dev release <https://github.com/phockett/PEMtk/releases/tag/v0.0.1-dev-QM3-310723>`__ of the codebase.
 3. `Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2022) <https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data>`__ - manuscript which covers photoionization theory and fitting methodologies, the latter as somewhat of a manual for PEMtk, including a full numerical case study.
 
-The figures below illustrate results for matrix element retrieval from N2, based on simulated aligned-frame data, illustrating density matrix and MFPAD results and phase sensitivity. For more details, see the docs above, or [the source notebooks](https://pemtk.readthedocs.io/en/latest/topical_review_case_study/matrix_element_extraction_MFrecon_PEMtk_180722-dist.html).
+The figures below illustrate results for matrix element retrieval from N2, based on simulated aligned-frame data, illustrating density matrix and MFPAD results and phase sensitivity. For more details, see *Quantum Metrology with Photoelectrons Vol. 3* `N2 case study MFPADs <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/part2/case-study-N2_290723.html#plot-mf-pads>`__ and `N2 case study density matrices <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/part2/case-study-N2_290723.html#density-matrices>`__.
 
 .. figure:: https://raw.githubusercontent.com/phockett/PEMtk/0a40bf2b38cff8187b2265094b4d7d0e8c8ee17e/docs/doc-source/figs/MFPADs_N2_recon_demo_2023.png
   :alt: MFPAD reconstruction demo
@@ -60,7 +60,7 @@ Or from setup.py (from clone dir)
 
 Notes
 
-* The dev version doesn't force any dependencies upon installation, but most functionality depends on `ePSproc` and required packages, which can be installed via pip or manually, see `ePSproc installation notes <https://epsproc.readthedocs.io/en/latest/about.html#installation-python>`__. Some optional packages may require further installation efforts, see the `scripts included in the Docker builds for recipes <https://github.com/phockett/open-photoionization-docker-stacks/tree/main/epsproc-pemtk>`__.
+* **The dev version doesn't force any dependencies upon installation, but most functionality depends on `ePSproc` and required packages, which can be installed via pip or manually**, see `ePSproc installation notes <https://epsproc.readthedocs.io/en/latest/about.html#installation-python>`__. Some optional packages may require further installation efforts, see the `scripts included in the Docker builds for recipes <https://github.com/phockett/open-photoionization-docker-stacks/tree/main/epsproc-pemtk>`__.
 * The repo can be passed directly to pip, e.g. ``pip install git+https://github.com/phockett/PEMtk.git``, see `notes in the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#git>`_.
 * Note that ``pip -e`` is for 'editable', and requires the source dir to remain, but the installation is also editable, `see notes here <https://stackoverflow.com/questions/41535915/python-pip-install-from-local-dir>`_. Alternatively, use ``pip install <path_to_local_pkg>``.
 
