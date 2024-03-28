@@ -40,32 +40,54 @@ A full demonstration can be found in `Quantum Metrology with Photoelectrons Vol.
 
 
 Installation
-------------
+============
 
 Currently (dev version) only from source + local pip install
 
-Using pip
+Using pip:
 
 .. code-block::
 
   git clone https://github.com/phockett/PEMtk.git
   pip install -e PEMtk
+  pip install ePSproc pyshtools lmfit
 
 
-Or from setup.py (from clone dir)
+Or from setup.py (from clone dir):
 
-``python setup.py install``
+.. code-block::
 
+  python setup.py install
 
-
-Notes
-
-* **The dev version doesn't force any dependencies upon installation, but most functionality depends on `ePSproc` and required packages, which can be installed via pip or manually**, see `ePSproc installation notes <https://epsproc.readthedocs.io/en/latest/about.html#installation-python>`__. Some optional packages may require further installation efforts, see the `scripts included in the Docker builds for recipes <https://github.com/phockett/open-photoionization-docker-stacks/tree/main/epsproc-pemtk>`__.
+*Notes*
 * The repo can be passed directly to pip, e.g. ``pip install git+https://github.com/phockett/PEMtk.git``, see `notes in the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#git>`_.
 * Note that ``pip -e`` is for 'editable', and requires the source dir to remain, but the installation is also editable, `see notes here <https://stackoverflow.com/questions/41535915/python-pip-install-from-local-dir>`_. Alternatively, use ``pip install <path_to_local_pkg>``.
 
 
-TODO: tidy-up build/install chain.
+Dependencies
+------------
+
+The basic install does not force any dependencies, but most required packages can be obtained via an installation of the main dependency, `ePSproc`, which provides core classes and computational functionality, along with `lmfit` for fitting routines.
+
+For any issues, the included `requirements-ePSproc.txt` file can also be used to pull dependencies, simply run:
+
+.. code-block::
+
+  pip install -r requirements-ePSproc.txt
+
+
+And for fitting functionality:
+
+.. code-block::
+
+  pip install pyshtools lmfit
+
+For more options and details, see:
+
+* `ePSproc installation notes <https://epsproc.readthedocs.io/en/latest/about.html#installation-python>`__.
+* `Quantum Metrology with Photoelectrons Vol. 3 installation notes <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/part1/platform_intro_070723.html#installation-and-environment-set-up>`__, includes `ePSproc`, `PEMtk` along with all book and demo files.
+* Some optional packages may require further installation efforts. In particular the use of `libmsym <https://github.com/mcodev31/libmsym>`__ for symmetrized harmonics requires a full local build with `cmake`, as detailed in the `libmsym installation guide <https://github.com/mcodev31/libmsym#installing>`__. This is included in the Docker builds (see below).
+
 
 
 Docker
@@ -80,7 +102,7 @@ Docker builds are available as follows:
 
 
 Roadmap
--------
+=======
 
 - Further fitting methodology & code developments
   - Faster fitting, GPU fitting etc.
@@ -110,7 +132,7 @@ Currently, the platform is under development, based on methods developed over th
 
 
 Citation
---------
+========
 
 If you make use of PEMtk in your research, please cite it.
 
@@ -129,7 +151,7 @@ Cite the software directly via the Github repository for the software - use the 
     commit = {788329b82911b2a0690323c64116aa6d19537ecc},
   }
 
-(For specific releases and commits, see https://github.com/phockett/PEMtk/releases and https://github.com/phockett/PEMtk/commits/master/, and the archived versions can also be found on Zenodo: |zenodo|.)
+(For specific releases and commits, see https://github.com/phockett/PEMtk/releases and https://github.com/phockett/PEMtk/commits/master/, and the archived versions can also be found on Zenodo: |zenodo|. Citation styles for software `from StackExchange <https://academia.stackexchange.com/questions/14010/how-do-you-cite-a-github-repository>`_.)
 
 ... or the book `Quantum Metrology with Photoelectrons Vol. 3 (2023) <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/intro.html>`__ and/or the manuscript `Topical Review: Extracting Molecular Frame Photoionization Dynamics from Experimental Data (2023) <https://www.authorea.com/users/71114/articles/447808-extracting-molecular-frame-photoionization-dynamics-from-experimental-data>`__ paper. Both are available in HTML versions with interactive figures (as linked above), and other forms online, and include discussion and numerical demos using the software (release v0.0.1-dev); see the included `CITATION.bib <https://github.com/phockett/PEMtk/blob/master/CITATION.bib>`__ for additional citation details and options.::
 
@@ -160,7 +182,6 @@ Cite the software directly via the Github repository for the software - use the 
     url = {https://dx.doi.org/10.1088/1361-6455/acd03e},
   }
 
-(Citation styles for software `from StackExchange <https://academia.stackexchange.com/questions/14010/how-do-you-cite-a-github-repository>`_.)
 
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.10882996.svg
