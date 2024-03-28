@@ -15,6 +15,12 @@ For details see:
 
 The figures below illustrate results for matrix element retrieval from N2, based on simulated aligned-frame data, illustrating density matrix and MFPAD results and phase sensitivity. For more details, see *Quantum Metrology with Photoelectrons Vol. 3* `N2 case study MFPADs <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/part2/case-study-N2_290723.html#plot-mf-pads>`__ and `N2 case study density matrices <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/part2/case-study-N2_290723.html#density-matrices>`__.
 
+.. figure:: https://raw.githubusercontent.com/phockett/PEMtk/550d64e8e4fc8a384d04fa7996eec9892fd79b02/docs/doc-source/figs/dataFit_demo_agg_N2_2023.png
+  :alt: BLM(t) fit demo
+
+  Time-dependent BLM(t) data fitting demo for N2, see `Quantum Metrology with Photoelectrons Vol. 3 <https://phockett.github.io/Quantum-Metrology-with-Photoelectrons-Vol3/part2/case-study-N2_290723.html#post-processing-and-data-overview>`__ for details.
+
+
 .. figure:: https://raw.githubusercontent.com/phockett/PEMtk/0a40bf2b38cff8187b2265094b4d7d0e8c8ee17e/docs/doc-source/figs/MFPADs_N2_recon_demo_2023.png
   :alt: MFPAD reconstruction demo
 
@@ -60,16 +66,18 @@ Or from setup.py (from clone dir):
   python setup.py install
 
 *Notes*
+
 * The repo can be passed directly to pip, e.g. ``pip install git+https://github.com/phockett/PEMtk.git``, see `notes in the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#git>`_.
 * Note that ``pip -e`` is for 'editable', and requires the source dir to remain, but the installation is also editable, `see notes here <https://stackoverflow.com/questions/41535915/python-pip-install-from-local-dir>`_. Alternatively, use ``pip install <path_to_local_pkg>``.
+* For basic use and fitting functionality, ``pip install ePSproc pyshtools lmfit`` should pull required dependencies, see below for more details.
 
 
 Dependencies
 ------------
 
-The basic install does not force any dependencies, but most required packages can be obtained via an installation of the main dependency, `ePSproc`, which provides core classes and computational functionality, along with `lmfit` for fitting routines.
+The basic install does not force any dependencies, but most required packages can be obtained via an installation of the main dependency, ``ePSproc``, which provides core classes and computational functionality, along with ``lmfit`` for fitting routines.
 
-For any issues, the included `requirements-ePSproc.txt` file can also be used to pull dependencies, simply run:
+For any issues, the included ``requirements-ePSproc.txt`` file can also be used to pull dependencies, simply run:
 
 .. code-block::
 
