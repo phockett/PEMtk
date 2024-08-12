@@ -67,7 +67,9 @@ def listPGs():
 
 
 
-def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, sumDims = [], dataType = 'BLM', verbose = 1):
+def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, sumDims = [], 
+              dataType = 'BLM', nullValues = None,
+              verbose = 1):
     """
     Convert/conform Xarray of symmetrized harmonics to reference ePSproc data structures.
 
@@ -94,6 +96,11 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, sumDims = [], dataType = '
         Data type to conform to.
         See :py:func:`ep.dataTypesList()` for all supported types.
         For harmonics, 'BLM' or 'matE' are suggested.
+        
+    nullValues : int, float, optional, default = None
+        If set, use this value for unassigned dims (except ['Cont','Targ','Total','Type'] and 'Eke', which are preset if missing).
+        TODO: add flexibility here, set for single value only.
+        Missing vals are set to np.nan if None.
 
     Returns
     -------
@@ -138,8 +145,12 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, sumDims = [], dataType = '
             elif dim in ['Eke']:
                 daTest = daTest.expand_dims({dim: [0]})   # 17/04/23: keep Eke as 0 if not set
             else:
-                daTest = daTest.expand_dims({dim: [np.nan]})   # 17/04/23: modified unassigned dims to NaN.
-                # daTest = daTest.expand_dims({dim: [0]})
+                if nullFill is None:
+                    daTest = daTest.expand_dims({dim: [np.nan]})   # 17/04/23: modified unassigned dims to NaN.
+                    # daTest = daTest.expand_dims({dim: [0]})
+                else:
+                    daTest = daTest.expand_dims({dim: [nullFill]})   # 12/08/24: use passed value if set (single val only).
+                    
     #         daTest = daTest.expand_dims({dim: [0]})
 
             if verbose:
