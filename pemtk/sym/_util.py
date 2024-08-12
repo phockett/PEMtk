@@ -68,7 +68,7 @@ def listPGs():
 
 
 def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, sumDims = [], 
-              dataType = 'BLM', nullValues = None,
+              dataType = 'BLM', nullFill = None,
               verbose = 1):
     """
     Convert/conform Xarray of symmetrized harmonics to reference ePSproc data structures.
@@ -97,7 +97,7 @@ def toePSproc(coeffs, dimMap = {'C':'Cont','h':'it'}, sumDims = [],
         See :py:func:`ep.dataTypesList()` for all supported types.
         For harmonics, 'BLM' or 'matE' are suggested.
         
-    nullValues : int, float, optional, default = None
+    nullFill : int, float, optional, default = None
         If set, use this value for unassigned dims (except ['Cont','Targ','Total','Type'] and 'Eke', which are preset if missing).
         TODO: add flexibility here, set for single value only.
         Missing vals are set to np.nan if None.
