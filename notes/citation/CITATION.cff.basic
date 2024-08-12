@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Hockett"
+  given-names: "Paul"
+  orcid: "https://orcid.org/0000-0001-9561-8433"
+title: "PEMtk: the Photoelectron Metrology Toolkit"
+version: 0.0.1
+doi: 10.5281/zenodo.10044679
+date-released: 2024-03-26
+url: "https://github.com/phockett/PEMtk"
+
+preferred-citation:
+  type: book
+  authors:
+  - family-names: "Hockett"
+    given-names: "Paul"
+    orcid: "https://orcid.org/0000-0001-9561-8433"
+  - family-names: "Makhija"
+    given-names: "Varun"
+    orcid: "https://orcid.org/0000-0002-4975-4888"
+  doi: "10.5281/zenodo.10044679"
+  title: "Quantum Metrology with Photoelectrons Vol. 3: Analysis methodologies"
+  year: 2023
