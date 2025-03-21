@@ -33,7 +33,7 @@ except:
     print("***Xarray not found, XR outputs not available.")
     xrFlag = False
 
-from ._util import prefixAxisTitles, listPGs, toePSproc, toePSman
+from ._util import prefixAxisTitles, listPGs, toePSproc, toePSman, toePSmanPD
 from ._directProduct import directProductTable, diretProductFromList
 # from ._dipoleTerms import dipoleTerms, allowedProducts
 
@@ -379,6 +379,18 @@ class symHarm():
         ePSSymList = toePSman(scatSym, contSym)
         
         self.continuum['allowed']['ePSSymList']=ePSSymList
+        
+        
+    def toePSmanPD(self):
+        """Wrap toePSmanPD method."""
+        
+        if 'symAllowed' in self.coeffs.keys():
+            ePSSymList = toePSmanPD(self.coeffs['symAllowed']['PD'])
+
+            self.continuum['allowed']['ePSSymList']=ePSSymList
+            
+        else:
+            print("Missing data 'self.coeffs['symAllowed']['PD']', try running 'self.toePSproc()' first, see https://pemtk.readthedocs.io/en/latest/sym/working_with_symmetry_PEMtk_notes_180423-v210423_tidy.html#Defining-allowed-matrix-elements for details.")
 
         
     def getIrreps(self):

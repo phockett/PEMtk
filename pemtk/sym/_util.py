@@ -174,10 +174,15 @@ def toePSman(scatSym = None, contSym = None):
         scatSym = symBasis.continuum['allowed']['scatList']
         contSym = symBasis.continuum['allowed']['targList']
         
+    If not already set, run symBasis.scatSym(sIon) to define final state and symmetries.
+        
     And see also epsman.esData.setePSinputs, which specifies:
     # Symmetry pairs for ScatSym (==ion x electron symm) and ScatContSym (==electron symm), input file will loop through these
     Ssym=({' '.join([item[0] for item in symList])})
     Csym=({' '.join([item[1] for item in symList])})
+    
+    21/03/25:   changed ordering to match ePSman case, symmetries output as (Total, Continuum) tuples, and upper case.
+                Note these are currently not explicitly converted to ePS syms, so there may be some mismatches.
 
     """
     
@@ -185,7 +190,29 @@ def toePSman(scatSym = None, contSym = None):
     # NOTE this fails for zip(sSym, cSym), need 1D list first?
 
     # [(x, z) for x, y in zip(sSym, cSym) for z in y]  # Fails
-    # ePSSymList = [(x, z) for x, y in zip(contSym, scatSym) for z in y]  # OK? cSym first
-    ePSSymList = [(z, x) for x, y in zip(contSym, scatSym) for z in y]  # OK? sSym first
+    ePSSymList = [(x.upper(), z.upper()) for x, y in zip(contSym, scatSym) for z in y]  # OK? sSym first - MATCHES current defns in ePSman. Note some symbols may not match ePS defns.
+#     ePSSymList = [(z, x) for x, y in zip(contSym, scatSym) for z in y]  # OK? cSym first
     
     return ePSSymList
+
+
+def toePSmanPD(symAllowedPD):
+    """
+    Set ePSman style symList from PD dataframe of symmetry allowed matrix elements.
+    
+    See also `toePSman` for basic case from symmetry lists.
+    
+    """
+    
+    # Pull allowed (Total, Cont) symmetry pairs for ePS config
+    symePSList = []
+
+    # Groupby Total is easiest thing here...?
+    # There's probably a neater way, but this does work.
+    for item in symAllowedPD.groupby('Total'):  
+        for col in item[1].items():
+            if col[1].any():
+                print(item[0],col[0])
+                symePSList.append((item[0].upper(),col[0].upper()))
+                
+    return symePSList
