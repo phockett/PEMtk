@@ -898,9 +898,21 @@ class pemtkFit(dataClass):
         # Add some metadata
         timeString = dt.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-        try:
-            self.data[fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{fitInd}, ({self.data[fitInd]['AFBLM']['t'].size} t, {self.data[fitInd]['AFBLM']['Labels'].size} pol) points, $\chi^2$={self.data[fitInd]['results'].chisqr}\n {timeString}"
-        except:
-            self.data[fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{fitInd}, ({self.data[fitInd]['AFBLM']['Labels'].size} pol) points, $\chi^2$={self.data[fitInd]['results'].chisqr}\n {timeString}"
+        # 20/05/25 - small update to allow for PD DataFrame case, as used for ep.gammaCalc routine and associated fitting.
+        if isinstance(BetaNormX, xr.DataArray):
+            try:
+                self.data[fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{fitInd}, ({self.data[fitInd]['AFBLM']['t'].size} t, {self.data[fitInd]['AFBLM']['Labels'].size} pol) points, $\chi^2$={self.data[fitInd]['results'].chisqr}\n {timeString}"
+            except:
+                self.data[fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{fitInd}, ({self.data[fitInd]['AFBLM']['Labels'].size} pol) points, $\chi^2$={self.data[fitInd]['results'].chisqr}\n {timeString}"
+        
+        # For fitting using gammaCalc, return is Pandas DataFrame
+        else:
+            try:
+                self.data[fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{fitInd}, ({self.data[fitInd]['AFBLM'].columns.values.size} t, $\chi^2$={self.data[fitInd]['results'].chisqr}\n {timeString}"
+            
+            # Fallback using no additional info
+            except:
+                self.data[fitInd]['AFBLM'].attrs['jobLabel'] = f"Fit #{fitInd}, $\chi^2$={self.data[fitInd]['results'].chisqr}\n {timeString}"
+        
 
         # self.fitInd += 1
